@@ -1,0 +1,212 @@
+---
+# In February 2023, a comprehensive analysis of ClangFormat (17) options was completed,
+# with this file as the resulting configuration. Since ClangFormat 7 (via llvm-toolset-7.0)
+# is the version available to us, that's all that is uncommented at this time.
+
+Language: Cpp
+AccessModifierOffset: -4
+
+# NOTE: clang-format 14
+# AlignAfterOpenBracket: BlockIndent
+AlignAfterOpenBracket: Align
+
+AlignConsecutiveAssignments: false
+# NOTE: clang-format 13
+# AlignArrayOfStructures: Right
+# NOTE: clang-format 11
+# AlignConsecutiveBitFields: true
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Right
+
+# TODO: In newer versions, we can use an enum to
+# better control the effect this setting has on
+# compound conditions.
+AlignOperands: false
+AlignTrailingComments: true
+
+# NOTE: clang-format 9
+# AllowAllArgumentsOnNextLine: true
+# NOTE: clang-format 9
+# AllowAllConstructorInitializersOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+# NOTE: clang-format 11
+# AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+# NOTE: clang-format 9
+# AllowShortLambdasOnASingleLine: None
+AllowShortLoopsOnASingleLine: false
+
+# NOTE: apparently deprecated - as of...?
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+
+# If false, then they must either be:
+#   all on the same line (including potentially the next line)
+#   or each on their own line
+# When they end up all being on the next line, it doesn't look
+# the best, but when they all get their own line, it is much
+# more readable than the alternative, so I see this as worth it.
+BinPackArguments: false
+BinPackParameters: false
+
+BraceWrapping:
+  # NOTE: Need newer clang-format
+  # AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: true
+  BeforeElse: true
+  # NOTE: Need newer clang-format
+  # BeforeLambdaBody: false
+  # BeforeWhile: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# NOTE: clang-format 16
+# BreakAfterAttributes: Always
+BreakBeforeBraces: Custom
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+
+ColumnLimit: 85
+
+CompactNamespaces: false
+
+# NOTE: deprecated as of clang-format 16
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 2
+
+ContinuationIndentWidth: 2
+
+Cpp11BracedListStyle: true
+
+DerivePointerAlignment: false
+
+DisableFormat: false
+
+# NOTE: clang-format 13
+# EmptyLineAfterAccessModifier: Never
+
+# NOTE: clang-format 12
+# EmptyLineBeforeAccessModifier: LogicalBlock
+
+ExperimentalAutoDetectBinPacking: false
+
+FixNamespaceComments: true
+
+IncludeBlocks: Preserve
+
+# NOTE: clang-format 13
+# IndentAccessModifiers: false
+# NOTE: clang-format 11
+# IndentCaseBlocks: false
+IndentCaseLabels: true
+# NOTE: clang-format 11
+# IndentExternBlock: Indent
+# NOTE: clang-format 10
+# IndentGotoLabels: false
+IndentPPDirectives: None
+# NOTE: clang-format 15, c++20
+# IndentRequiresClause:
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+
+# NOTE: clang-format 15
+# InsertBraces: true
+# NOTE: clang-format 16
+# InsertNewlineAtEOF: true
+# NOTE: clang-format 16
+# IntegerLiteralSeparator:
+#   Decimal: 3
+
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# NOTE: clang-format 13
+# LambdaBodyIndentation: Signature
+
+Language: Cpp
+
+# NOTE: clang-format 16
+# LineEnding: LF
+
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+
+# NOTE: clang-format 14
+# PackConstructorInitializers: Never
+
+PointerAlignment: Left
+
+# NOTE: clang-format 14, also needs QualifierOrder
+# QualifierAlignmentStyle: Custom
+
+# NOTE: clang-format 13
+# ReferenceAlignment: Left
+
+ReflowComments: true
+# NOTE: clang-format 16
+# RemoveSemicolon: true
+
+# NOTE: clang-format 14
+# SeparateDefinitionBlocks: Always
+
+# NOTE: clang-format 13
+# ShortNamespaceLines: 20
+
+SortIncludes: true
+SortUsingDeclarations: true
+
+SpaceAfterCStyleCast: false
+# NOTE: clang-format 9
+# SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+
+# NOTE: clang-format 12
+# SpaceAroundPointerQualifiers: Default
+
+SpaceBeforeAssignmentOperators: true
+# NOTE: clang-format 12
+# SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+# NOTE: clang-format 10
+# SpaceBeforeSquareBrackets: false
+# SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+# NOTE: clang-format 10
+# SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+# NOTE: clang-format 13
+# SpacesInLineCommentPrefix:
+#   Minimum: 1
+#   Maximum: 1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+Standard: Cpp11
+
+TabWidth: 4
+UseTab: Never
