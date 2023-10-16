@@ -7,14 +7,14 @@ Language: Cpp
 AccessModifierOffset: -4
 
 # NOTE: clang-format 14
-# AlignAfterOpenBracket: BlockIndent
+AlignAfterOpenBracket: BlockIndent
 AlignAfterOpenBracket: Align
 
 AlignConsecutiveAssignments: false
 # NOTE: clang-format 13
-# AlignArrayOfStructures: Right
+AlignArrayOfStructures: Right
 # NOTE: clang-format 11
-# AlignConsecutiveBitFields: true
+AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Right
 
@@ -25,19 +25,19 @@ AlignOperands: false
 AlignTrailingComments: true
 
 # NOTE: clang-format 9
-# AllowAllArgumentsOnNextLine: true
+AllowAllArgumentsOnNextLine: true
 # NOTE: clang-format 9
-# AllowAllConstructorInitializersOnNextLine: true
+AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 # NOTE: clang-format 11
-# AllowShortEnumsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: false
 # NOTE: clang-format 9
-# AllowShortLambdasOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
 
 # NOTE: apparently deprecated - as of...?
@@ -57,7 +57,7 @@ BinPackParameters: false
 
 BraceWrapping:
   # NOTE: Need newer clang-format
-  # AfterCaseLabel: false
+  AfterCaseLabel: false
   AfterClass: false
   AfterControlStatement: false
   AfterEnum: false
@@ -69,14 +69,14 @@ BraceWrapping:
   BeforeCatch: true
   BeforeElse: true
   # NOTE: Need newer clang-format
-  # BeforeLambdaBody: false
-  # BeforeWhile: true
+  BeforeLambdaBody: false
+  BeforeWhile: true
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 
 # NOTE: clang-format 16
-# BreakAfterAttributes: Always
+BreakAfterAttributes: Always
 BreakBeforeBraces: Custom
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
@@ -101,10 +101,10 @@ DerivePointerAlignment: false
 DisableFormat: false
 
 # NOTE: clang-format 13
-# EmptyLineAfterAccessModifier: Never
+EmptyLineAfterAccessModifier: Never
 
 # NOTE: clang-format 12
-# EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineBeforeAccessModifier: LogicalBlock
 
 ExperimentalAutoDetectBinPacking: false
 
@@ -113,14 +113,14 @@ FixNamespaceComments: true
 IncludeBlocks: Preserve
 
 # NOTE: clang-format 13
-# IndentAccessModifiers: false
+IndentAccessModifiers: false
 # NOTE: clang-format 11
-# IndentCaseBlocks: false
+IndentCaseBlocks: false
 IndentCaseLabels: true
 # NOTE: clang-format 11
-# IndentExternBlock: Indent
+IndentExternBlock: Indent
 # NOTE: clang-format 10
-# IndentGotoLabels: false
+IndentGotoLabels: false
 IndentPPDirectives: None
 # NOTE: clang-format 15, c++20
 # IndentRequiresClause:
@@ -128,28 +128,28 @@ IndentWidth: 4
 IndentWrappedFunctionNames: false
 
 # NOTE: clang-format 15
-# InsertBraces: true
+InsertBraces: true
 # NOTE: clang-format 16
-# InsertNewlineAtEOF: true
+InsertNewlineAtEOF: true
 # NOTE: clang-format 16
-# IntegerLiteralSeparator:
-#   Decimal: 3
+IntegerLiteralSeparator:
+  Decimal: 3
 
 KeepEmptyLinesAtTheStartOfBlocks: false
 
 # NOTE: clang-format 13
-# LambdaBodyIndentation: Signature
+LambdaBodyIndentation: Signature
 
 Language: Cpp
 
 # NOTE: clang-format 16
-# LineEnding: LF
+LineEnding: LF
 
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 
 # NOTE: clang-format 14
-# PackConstructorInitializers: Never
+PackConstructorInitializers: Never
 
 PointerAlignment: Left
 
@@ -157,47 +157,47 @@ PointerAlignment: Left
 # QualifierAlignmentStyle: Custom
 
 # NOTE: clang-format 13
-# ReferenceAlignment: Left
+ReferenceAlignment: Left
 
 ReflowComments: true
 # NOTE: clang-format 16
-# RemoveSemicolon: true
+RemoveSemicolon: true
 
 # NOTE: clang-format 14
-# SeparateDefinitionBlocks: Always
+SeparateDefinitionBlocks: Always
 
 # NOTE: clang-format 13
-# ShortNamespaceLines: 20
+ShortNamespaceLines: 20
 
 SortIncludes: true
 SortUsingDeclarations: true
 
 SpaceAfterCStyleCast: false
 # NOTE: clang-format 9
-# SpaceAfterLogicalNot: false
+SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
 
 # NOTE: clang-format 12
-# SpaceAroundPointerQualifiers: Default
+SpaceAroundPointerQualifiers: Default
 
 SpaceBeforeAssignmentOperators: true
 # NOTE: clang-format 12
-# SpaceBeforeCaseColon: false
+SpaceBeforeCaseColon: false
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
 # NOTE: clang-format 10
-# SpaceBeforeSquareBrackets: false
-# SpaceInEmptyBlock: false
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 
 SpacesBeforeTrailingComments: 2
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 # NOTE: clang-format 10
-# SpacesInConditionalStatement: false
+SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 # NOTE: clang-format 13
 # SpacesInLineCommentPrefix:
