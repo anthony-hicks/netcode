@@ -3,12 +3,10 @@
 # with this file as the resulting configuration. Since ClangFormat 7 (via llvm-toolset-7.0)
 # is the version available to us, that's all that is uncommented at this time.
 
-Language: Cpp
 AccessModifierOffset: -4
 
 # NOTE: clang-format 14
 AlignAfterOpenBracket: BlockIndent
-AlignAfterOpenBracket: Align
 
 AlignConsecutiveAssignments: false
 # NOTE: clang-format 13
