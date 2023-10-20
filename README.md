@@ -12,11 +12,14 @@ between a client and server (dumb client)
 3. Add graphics to enhance demonstration
 
 ## Requirements
-- cross-platform
+- cross-platform (eventually, linux preferred right now)
 - client-side prediction
 - entity interpolation
 
 ## Future
+- replace asio with handwritten modern C++ code 
+  - consider using getaddrinfo instead of traditional approach
+- use udp with custom reliability and congestion avoidance
 - interactive UI to toggle each technique as well as client lag and server update rate
 
 ## Setup

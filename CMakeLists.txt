@@ -5,7 +5,26 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(cmake/compiler_warnings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/CPM.cmake)
 
-add_subdirectory(lib/src)
+CPMAddPackage(
+        NAME SDL2
+        VERSION 2.28.4
+        GITHUB_REPOSITORY "libsdl-org/SDL"
+        GIT_TAG release-2.28.4
+        SYSTEM TRUE
+        EXCLUDE_FROM_ALL TRUE
+)
+
+CPMAddPackage("gh:gabime/spdlog@1.12.0")
+find_package(Threads REQUIRED)
+CPMAddPackage("gh:chriskohlhoff/asio#asio-1-28-0@1.28.0")
+if (asio_ADDED)
+        add_library(asio INTERFACE)
+        target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
+        target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
+        target_link_libraries(asio INTERFACE Threads::Threads)
+endif ()
+
+include(cmake/compiler_warnings.cmake)
 add_subdirectory(src)

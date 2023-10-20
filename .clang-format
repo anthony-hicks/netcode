@@ -8,12 +8,12 @@ AccessModifierOffset: -4
 # NOTE: clang-format 14
 AlignAfterOpenBracket: BlockIndent
 
-AlignConsecutiveAssignments: false
+AlignConsecutiveAssignments: None
 # NOTE: clang-format 13
 AlignArrayOfStructures: Right
 # NOTE: clang-format 11
-AlignConsecutiveBitFields: true
-AlignConsecutiveDeclarations: false
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: "None"
 AlignEscapedNewlines: Right
 
 # TODO: In newer versions, we can use an enum to
@@ -28,11 +28,11 @@ AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 # NOTE: clang-format 11
 AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 # NOTE: clang-format 9
 AllowShortLambdasOnASingleLine: None
@@ -57,7 +57,7 @@ BraceWrapping:
   # NOTE: Need newer clang-format
   AfterCaseLabel: false
   AfterClass: false
-  AfterControlStatement: false
+  AfterControlStatement: "false"
   AfterEnum: false
   AfterFunction: true
   AfterNamespace: false
@@ -130,8 +130,8 @@ InsertBraces: true
 # NOTE: clang-format 16
 InsertNewlineAtEOF: true
 # NOTE: clang-format 16
-IntegerLiteralSeparator:
-  Decimal: 3
+#IntegerLiteralSeparator:
+  #Decimal:
 
 KeepEmptyLinesAtTheStartOfBlocks: false
 
@@ -167,7 +167,7 @@ SeparateDefinitionBlocks: Always
 # NOTE: clang-format 13
 ShortNamespaceLines: 20
 
-SortIncludes: true
+SortIncludes: CaseInsensitive
 SortUsingDeclarations: true
 
 SpaceAfterCStyleCast: false
@@ -204,7 +204,7 @@ SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 
-Standard: Cpp11
+Standard: Latest
 
 TabWidth: 4
 UseTab: Never

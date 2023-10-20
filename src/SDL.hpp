@@ -47,24 +47,29 @@ void initialize(uint32_t flags);
 struct WindowDeleter {
     void operator()(SDL_Window* p) { SDL_DestroyWindow(p); }
 };
-using Window = std::unique_ptr<SDL_Window, WindowDeleter>;
+using Window_ptr = std::unique_ptr<SDL_Window, WindowDeleter>;
 
 struct SurfaceDeleter {
     void operator()(SDL_Surface* p) { SDL_FreeSurface(p); }
 };
-using Surface_Ptr = std::unique_ptr<SDL_Surface, SurfaceDeleter>;
+using Surface_ptr = std::unique_ptr<SDL_Surface, SurfaceDeleter>;
+
+struct RendererDeleter {
+    void operator()(SDL_Renderer* p) { SDL_DestroyRenderer(p); }
+};
+using Renderer_ptr = std::unique_ptr<SDL_Renderer, RendererDeleter>;
 
 // No abstraction for SDL_GetWindowSurface because a simple, nullable
 // pointer is accurate (non-owning) and we don't have a need for
-// an actual Window class yet where we could maybe implement a member
+// an actual Window_ptr class yet where we could maybe implement a member
 // function: window.surface() -> SDL_Surface*
 //
 // CCG recommends assuming every raw pointer can be null.
 SDL_Surface* GetWindowSurface(SDL_Window* window);
 
-Surface_Ptr LoadBMP(std::filesystem::path const& path);
+Surface_ptr LoadBMP(std::filesystem::path const& path);
 
-Surface_Ptr ConvertSurface(SDL_Surface* surface, SDL_PixelFormat const* format);
+Surface_ptr ConvertSurface(SDL_Surface* surface, SDL_PixelFormat const* format);
 
 bool UpdateWindowSurface(SDL_Window* window);
 

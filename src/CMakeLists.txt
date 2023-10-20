@@ -8,12 +8,40 @@ enable_compiler_warnings()
 # remove the WIN32 keyword.
 add_executable(demo
         main.cpp
+        SDL.cpp
+        Server.cpp
+        Server.hpp
+        Client.cpp
+        Client.hpp
+)
+
+add_executable(asio-server
+        asio_sync_server.cpp
+)
+target_link_libraries(asio-server
+        asio
+)
+
+add_executable(asio-async-server
+        asio_sync_server.cpp
+)
+target_link_libraries(asio-async-server
+        asio
+)
+
+add_executable(asio-client
+        asio_client.cpp
+)
+target_link_libraries(asio-client
+        asio
 )
 
 target_link_libraries(demo
-        PUBLIC
-            SDL++
+        PRIVATE
+            SDL2::SDL2
             SDL2::SDL2main
+            spdlog
+            asio
 )
 
 # .dll has to be in the same directory as the .exe
