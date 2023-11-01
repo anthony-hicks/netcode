@@ -5,44 +5,104 @@
 
 using asio::ip::tcp;
 
-namespace app {
-
-void async_read_foo()
+Client::Client(asio::io_context* ctx, std::string_view host, std::string_view port)
+  : _ctx(ctx),
+    _socket(*ctx)
 {
-    std::string message;
-    asio::async_read(
-      socket,
-      asio::buffer(message),
-      [](asio::error_code error_code, std::size_t length) {
-          if (error_code) {
-              spdlog::error("[client] error TODO what can trigger this");
-              return;
-          }
-      }
-    )
+    tcp::resolver resolver(*_ctx);
+    auto endpoints = resolver.resolve(host, port);
+    async_connect(endpoints);
 }
 
-// TODO (client)
-//  - async reads (callback) for server updates
-//  - async write to server (write can happen on main thread I think)
-void foo(asio::io_context& io_context)
+Client::~Client()
 {
-    tcp::resolver resolver(io_context);
-    // TODO: params
-    auto endpoints = resolver.resolve(tcp::v4(), "localhost", std::to_string(50000));
-    tcp::socket socket(io_context);
+    close();
+}
+
+void Client::close()
+{
+    asio::post(*_ctx, [this] {
+        if (_socket.is_open()) {
+            _socket.close();
+        }
+    });
+}
+
+void Client::async_write(const std::string& message)
+{
+    asio::post(*_ctx, [this, message]() {
+        _write_queue.push(message);
+
+        asio::async_write(
+          _socket,
+          asio::buffer(_write_queue.front().data(), _write_queue.front().size()),
+          [this](std::error_code ec, std::size_t bytes_written) {
+              if (ec) {
+                  spdlog::error("[client] async_write: {}", ec.message());
+                  // TODO: _socket.close()?
+                  _socket.close();
+                  return;
+              }
+
+              spdlog::info(
+                "[client] send: {} ({}B)", _write_queue.front(), bytes_written
+              );
+
+              _write_queue.pop();
+
+              // TODO:
+              // NOTE: chat_client.cpp (from ASIO examples) has a call to
+              // do_write() here if there are more messages on the queue to
+              // write. But from what I understand, you can only get a message
+              // on the queue by calling write(), which itself posts a call to
+              // async_write. So there would already be a 1:1 without do_write
+              // needing to make more async_write calls to "drain" the queue.
+          }
+        );
+    });
+}
+
+void Client::async_connect(tcp::resolver::results_type const& endpoints)
+{
     asio::async_connect(
-      socket,
+      _socket,
       endpoints,
-      [](asio::error_code error_code, tcp::endpoint endpoint) {
-          if (error_code) {
-              spdlog::error("[client] async_connect");
+      [this](std::error_code ec, tcp::endpoint endpoint) {
+          if (ec) {
+              spdlog::error("[client] async_connect: {}", ec.message());
               return;
           }
 
-          spdlog::info("[client] connected to {}", endpoint.address().to_string());
-          async_read_foo();
+          spdlog::info(
+            "[client] connected to server {}:{}",
+            endpoint.address().to_string(),
+            endpoint.port()
+          );
+
+          async_read();
       }
     );
 }
+
+void Client::async_read()
+{
+    _socket.async_read_some(
+      asio::buffer(_read_buffer),
+      [this](std::error_code ec, std::size_t bytes_read) {
+          if (ec) {
+              spdlog::error("[client] async_read: {}", ec.message());
+              _socket.close();
+              // TODO: socket.close()?
+              return;
+          }
+
+          spdlog::info(
+            "[client] recv: {} ({}B)",
+            std::string_view(_read_buffer.begin(), bytes_read),
+            bytes_read
+          );
+
+          async_read();
+      }
+    );
 }
