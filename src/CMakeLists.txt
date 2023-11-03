@@ -13,20 +13,12 @@ add_executable(demo
         Client.cpp
 )
 
-add_executable(two
-        two_in_one.cpp
-        Client.cpp
-        Server.cpp
-)
-target_link_libraries(two asio spdlog)
-
 target_link_libraries(demo
         PRIVATE
             SDL2::SDL2
             SDL2::SDL2main
             spdlog
             asio
-            Microsoft.GSL::GSL
 )
 
 # .dll has to be in the same directory as the .exe
