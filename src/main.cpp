@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Message.hpp"
 #include "SDL.hpp"
 #include "Server.hpp"
 
@@ -80,7 +81,6 @@ int main(int argc, char* argv[])
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_QUIT) {
                 spdlog::info("[user] QUIT");
-                client.async_write("Goodbye, stranger!");
 
                 // TODO: Graceful termination without explicit stops here
                 ctx.stop();
@@ -90,14 +90,14 @@ int main(int argc, char* argv[])
 
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
-                    case SDLK_LEFT:
+                    case SDLK_LEFT: {
                         spdlog::info("[user] LEFT");
-                        client.async_write("left");
-                        break;
-                    case SDLK_RIGHT:
+                        client.async_write({.command = Command::move_left});
+                    } break;
+                    case SDLK_RIGHT: {
                         spdlog::info("[user] RIGHT");
-                        client.async_write("right");
-                        break;
+                        client.async_write({.command = Command::move_right});
+                    } break;
                 }
             }
         }
@@ -106,6 +106,4 @@ int main(int argc, char* argv[])
             return 1;
         }
     }
-
-    return 0;
 }

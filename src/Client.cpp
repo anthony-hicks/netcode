@@ -7,7 +7,8 @@ using asio::ip::tcp;
 
 Client::Client(asio::io_context* ctx, std::string_view host, std::string_view port)
   : _ctx(ctx),
-    _socket(*ctx)
+    _socket(*ctx),
+    _position({.position = 0})
 {
     tcp::resolver resolver(*_ctx);
     auto endpoints = resolver.resolve(host, port);
@@ -28,14 +29,14 @@ void Client::close()
     });
 }
 
-void Client::async_write(const std::string& message)
+void Client::async_write(const Command_Message& message)
 {
     asio::post(*_ctx, [this, message]() {
         _write_queue.push(message);
 
         asio::async_write(
           _socket,
-          asio::buffer(_write_queue.front().data(), _write_queue.front().size()),
+          asio::buffer(&_write_queue.front(), _write_queue.front().size()),
           [this](std::error_code ec, std::size_t bytes_written) {
               if (ec) {
                   spdlog::error("[client] async_write: {}", ec.message());
@@ -45,7 +46,9 @@ void Client::async_write(const std::string& message)
               }
 
               spdlog::info(
-                "[client] send: {} ({}B)", _write_queue.front(), bytes_written
+                "[client] send: {} ({}B)",
+                _write_queue.front().to_string(),
+                bytes_written
               );
 
               _write_queue.pop();
@@ -67,7 +70,7 @@ void Client::async_connect(tcp::resolver::results_type const& endpoints)
     asio::async_connect(
       _socket,
       endpoints,
-      [this](std::error_code ec, tcp::endpoint endpoint) {
+      [this](std::error_code ec, tcp::endpoint const& endpoint) {
           if (ec) {
               spdlog::error("[client] async_connect: {}", ec.message());
               return;
@@ -86,8 +89,9 @@ void Client::async_connect(tcp::resolver::results_type const& endpoints)
 
 void Client::async_read()
 {
-    _socket.async_read_some(
-      asio::buffer(_read_buffer),
+    asio::async_read(
+      _socket,
+      asio::buffer(&_position, _position.size()),
       [this](std::error_code ec, std::size_t bytes_read) {
           if (ec) {
               spdlog::error("[client] async_read: {}", ec.message());
@@ -96,11 +100,7 @@ void Client::async_read()
               return;
           }
 
-          spdlog::info(
-            "[client] recv: {} ({}B)",
-            std::string_view(_read_buffer.begin(), bytes_read),
-            bytes_read
-          );
+          spdlog::info("[client] recv: {} ({}B)", _position.position, bytes_read);
 
           async_read();
       }
