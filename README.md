@@ -6,10 +6,19 @@ moved by the player via keyboard input. In the background there will be a client
 application utilizing latency compensation.
 
 ## Roadmap
-1. Basic application handling keyboard input and sending real network messages
-between a client and server (dumb client)
-2. Add latency compensation
-3. Add graphics to enhance demonstration
+1. ~~Basic application handling keyboard input and sending real network messages
+between a client and server (dumb client)~~
+2. Graphics for player 1 client view of a circle
+3. Add intentional server delay and/or tick rate to make differences more noticeable
+4. Client-side prediction
+5. Server reconciliation
+6. Entity interpolation
+7. Graphics for server view
+8. Networking for player 2 client, which only receives the position of player 1
+9. Graphics for player 2 view
+10. Toggleable GUI for each technique and latency/tick rate
+11. Add latency compensation
+12. Add graphics to enhance demonstration
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)
@@ -25,7 +34,7 @@ between a client and server (dumb client)
 ## Setup
 ### Tools
 - SDL2
-- C++23
+- C++20
 - make
 - CMake
 

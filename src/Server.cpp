@@ -64,6 +64,14 @@ void Server::Session::async_read()
       _socket,
       asio::buffer(&_client_message, _client_message.size()),
       [this, self](std::error_code ec, std::size_t bytes_read) {
+          if (ec == asio::error::eof) {
+              spdlog::info(
+                "[server] client disconnected: {}",
+                _socket.local_endpoint().address().to_string()
+              );
+              return;
+          }
+
           if (ec) {
               spdlog::error("[server] async_read: {}", ec.message());
               return;
