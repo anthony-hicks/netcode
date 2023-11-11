@@ -7,6 +7,10 @@
 #include <filesystem>
 #include <memory>
 
+#define LOG_SDL_ERROR(fn, ret) spdlog::error(#fn": ({}) {}", ret, SDL_GetError())
+#define RETURN_IF_SDL_ERROR(fn, ...) \
+    if (auto ret = (fn)(__VA_ARGS__); ret < 0) LOG_SDL_ERROR((fn), ret)
+
 namespace SDL {
 
 namespace detail {
@@ -32,20 +36,23 @@ private:
 /// @throws std::runtime_error on failure
 void initialize(uint32_t flags);
 
-struct WindowDeleter {
+struct Window_deleter {
     void operator()(SDL_Window* p) { SDL_DestroyWindow(p); }
 };
-using Window_ptr = std::unique_ptr<SDL_Window, WindowDeleter>;
 
-struct SurfaceDeleter {
+using Window_ptr = std::unique_ptr<SDL_Window, Window_deleter>;
+
+struct Surface_deleter {
     void operator()(SDL_Surface* p) { SDL_FreeSurface(p); }
 };
-using Surface_ptr = std::unique_ptr<SDL_Surface, SurfaceDeleter>;
 
-struct RendererDeleter {
+using Surface_ptr = std::unique_ptr<SDL_Surface, Surface_deleter>;
+
+struct Renderer_deleter {
     void operator()(SDL_Renderer* p) { SDL_DestroyRenderer(p); }
 };
-using Renderer_ptr = std::unique_ptr<SDL_Renderer, RendererDeleter>;
+
+using Renderer_ptr = std::unique_ptr<SDL_Renderer, Renderer_deleter>;
 
 // No abstraction for SDL_GetWindowSurface because a simple, nullable
 // pointer is accurate (non-owning) and we don't have a need for
@@ -58,17 +65,4 @@ SDL_Surface* GetWindowSurface(SDL_Window* window);
 Surface_ptr LoadBMP(std::filesystem::path const& path);
 
 Surface_ptr ConvertSurface(SDL_Surface* surface, SDL_PixelFormat const* format);
-
-bool UpdateWindowSurface(SDL_Window* window);
-
-bool BlitSurface(SDL_Surface* src,
-                 const SDL_Rect* srcrect,
-                 SDL_Surface* dest,
-                 SDL_Rect* destrect);
-
-bool BlitScaled(SDL_Surface* src,
-                const SDL_Rect* srcrect,
-                SDL_Surface* dest,
-                SDL_Rect* destrect);
-
 }  // namespace SDL

@@ -13,12 +13,12 @@
 using asio::ip::tcp;
 using namespace std::chrono_literals;
 
-class AsyncServer {
+class Async_server {
     Server _server;
     std::jthread _thread;
 
 public:
-    explicit AsyncServer(
+    explicit Async_server(
       const tcp::endpoint& endpoint, std::chrono::milliseconds tick_interval
     )
       : _server(endpoint, tick_interval),
@@ -27,15 +27,18 @@ public:
         })
     {}
 
-    ~AsyncServer() { _server.stop(); }
+    ~Async_server() { _server.stop(); }
+
+    DISABLE_COPY(Async_server);
+    DISABLE_MOVE(Async_server);
 };
 
-class AsyncClient : public Client {
+class Async_client : public Client {
     asio::io_context* _ctx;
     std::jthread _thread;
 
 public:
-    explicit AsyncClient(
+    explicit Async_client(
       asio::io_context* ctx, std::string_view host, std::string_view port
     )
       : Client(ctx, host, port),
@@ -45,14 +48,10 @@ public:
         })
     {}
 
-    ~AsyncClient() { _ctx->stop(); }
-};
+    ~Async_client() { _ctx->stop(); }
 
-struct Color {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
+    DISABLE_COPY(Async_client);
+    DISABLE_MOVE(Async_client);
 };
 
 int main(int argc, char* argv[])
@@ -73,14 +72,14 @@ int main(int argc, char* argv[])
     // Create the server on its own thread. Normally the server would be its own
     // process, but to simplify testing a little bit, we're going to spawn it as
     // a thread. We will still communicate with it over the network, however.
-    AsyncServer const async_server(
+    Async_server const async_server(
       tcp::endpoint(tcp::v4(), static_cast<unsigned short>(std::stoul(port))), 1000ms
     );
 
     // Run the client's session/event loop with the server on its own thread. This
     // thread asynchronously communicates with the server.
     asio::io_context client_ctx;
-    AsyncClient client(&client_ctx, host, port);
+    Async_client client(&client_ctx, host, port);
 
     // Sleep for a very short amount of time so the event loops are ready
     std::this_thread::sleep_for(10ms);
@@ -100,6 +99,7 @@ int main(int argc, char* argv[])
     ));
 
     if (!window) {
+        LOG_SDL_ERROR(SDL_CreateWindow, nullptr);
         return 1;
     }
 
@@ -107,9 +107,7 @@ int main(int argc, char* argv[])
       SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)
     );
     if (!renderer) {
-        spdlog::error(
-          "SDL_CreateRenderer: failed to create renderer: {}", SDL_GetError()
-        );
+        LOG_SDL_ERROR(SDL_CreateRenderer, nullptr);
         return 1;
     }
 
@@ -144,8 +142,8 @@ int main(int argc, char* argv[])
             }
         }
 
-        SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
-        SDL_RenderClear(renderer.get());
+        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255);
+        RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
         // Get the current offset from the client
         const int offset = client.position();
@@ -154,8 +152,8 @@ int main(int argc, char* argv[])
         rectangle.x = screen_width / 4 + offset;
 
         // TODO: Change to circle
-        SDL_SetRenderDrawColor(renderer.get(), 0, 0, 255, 255);
-        SDL_RenderDrawRect(renderer.get(), &rectangle);
+        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
+        RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &rectangle);
 
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());

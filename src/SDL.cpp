@@ -24,7 +24,7 @@ Library::~Library()
 Library::Library(uint32_t flags)
 {
     if (int result = SDL_Init(flags); result < 0) {
-        spdlog::error("SDL_Init ({}): {}", result, SDL_GetError());
+        LOG_SDL_ERROR(SDL_Init, result);
         throw std::runtime_error(
           std::format("ERROR: SDL_Init ({}): {}", result, SDL_GetError())
         );
@@ -51,7 +51,7 @@ SDL_Surface* GetWindowSurface(SDL_Window* window)
     SDL_Surface* surface = SDL_GetWindowSurface(window);
 
     if (surface == nullptr) {
-        spdlog::error("SDL_GetWindowSurface (nullptr): {}", SDL_GetError());
+        LOG_SDL_ERROR(SDL_GetWindowSurface, nullptr);
     }
 
     return surface;
@@ -64,7 +64,7 @@ Surface_ptr LoadBMP(std::filesystem::path const& path)
     Surface_ptr surface(SDL_LoadBMP(path.string().c_str()));
 
     if (!surface) {
-        spdlog::error("SDL_LoadBMP (nullptr): {}", SDL_GetError());
+        LOG_SDL_ERROR(SDL_LoadBMP, nullptr);
     }
 
     return surface;
@@ -76,43 +76,10 @@ Surface_ptr ConvertSurface(SDL_Surface* surface, SDL_PixelFormat const* format)
     Surface_ptr converted_surface(SDL_ConvertSurface(surface, format, 0));
 
     if (!converted_surface) {
-        spdlog::error("SDL_ConvertSurface (nullptr): {}", SDL_GetError());
+        LOG_SDL_ERROR(SDL_ConvertSurface, nullptr);
     }
 
     return converted_surface;
 }
 
-bool UpdateWindowSurface(SDL_Window* window)
-{
-    if (int err = SDL_UpdateWindowSurface(window); err < 0) {
-        spdlog::error("SDL_UpdateWindowSurface ({}): {}", err, SDL_GetError());
-        return false;
-    }
-
-    return true;
-}
-
-bool BlitSurface(
-  SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dest, SDL_Rect* destrect
-)
-{
-    if (int err = SDL_BlitSurface(src, srcrect, dest, destrect); err < 0) {
-        spdlog::error("SDL_BlitSurface (-1): {}", SDL_GetError());
-        return false;
-    }
-
-    return true;
-}
-
-bool BlitScaled(
-  SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dest, SDL_Rect* destrect
-)
-{
-    if (int result = SDL_BlitScaled(src, srcrect, dest, destrect); result < 0) {
-        spdlog::error("SDL_BlitScaled (-1): {}", SDL_GetError());
-        return false;
-    }
-
-    return true;
-}
 }  // namespace SDL
