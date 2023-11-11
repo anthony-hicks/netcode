@@ -86,8 +86,8 @@ int main(int argc, char* argv[])
 
     SDL::initialize(SDL_INIT_EVENTS);
 
-    static constexpr int screen_height = 480;
-    static constexpr int screen_width = 480;
+    static constexpr int screen_height = 240;
+    static constexpr int screen_width = 750;
 
     SDL::Window_ptr const window(SDL_CreateWindow(
       "Demo",
@@ -111,11 +111,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    constexpr int screen_center_x = screen_width / 2;
+    constexpr int rect_height = 200;
+    constexpr int rect_width = rect_height;
+    constexpr int initial_x = screen_center_x - rect_width / 2;
+    constexpr int y = (screen_height - rect_height) / 2;
+
     SDL_Rect rectangle{
-      .x = screen_width / 4,
-      .y = screen_height / 4,
-      .w = screen_width / 2,
-      .h = screen_height / 2};
+      .x = initial_x,
+      .y = y,
+      .w = rect_width,
+      .h = rect_height};
 
     SDL_Event event;
 
@@ -149,7 +155,7 @@ int main(int argc, char* argv[])
         const int offset = client.position();
 
         // Offset the rectangle's position
-        rectangle.x = screen_width / 4 + offset;
+        rectangle.x = initial_x + offset;
 
         // TODO: Change to circle
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
