@@ -23,16 +23,25 @@ class Server {
         Position_Message _position_message;
 
         asio::steady_timer _tick_timer;
+        std::chrono::milliseconds _tick_interval;
 
         /// @brief Private constructor so you can't accidentally get a
         /// std::bad_weak_ptr exception thrown when calling shared_from_this().
-        explicit Session(asio::io_context* ctx, tcp::socket&& socket);
+        explicit Session(
+          asio::io_context* ctx,
+          tcp::socket&& socket,
+          std::chrono::milliseconds tick_interval
+        );
 
     public:
         /// Create the session. You MUST call .begin() to begin the session
         /// with the client (asynchronous).
         [[nodiscard]]
-        static std::shared_ptr<Session> create(asio::io_context* ctx, tcp::socket&& socket);
+        static std::shared_ptr<Session> create(
+          asio::io_context* ctx,
+          tcp::socket&& socket,
+          std::chrono::milliseconds tick_interval
+        );
 
         Session() = delete;
         ~Session() = default;
@@ -49,7 +58,9 @@ class Server {
 
 public:
     /// Create the server. Must call .start() to start accepting connections.
-    explicit Server(tcp::endpoint const& endpoint);
+    explicit Server(
+      tcp::endpoint const& endpoint, std::chrono::milliseconds tick_interval
+    );
 
     /// Calls stop().
     ~Server();
@@ -66,4 +77,5 @@ private:
     asio::io_context _ctx;
     tcp::acceptor _acceptor;
     tcp::endpoint _endpoint;
+    std::chrono::milliseconds _tick_interval;
 };

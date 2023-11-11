@@ -8,18 +8,28 @@ using asio::ip::tcp;
 
 /// Gotcha: must not call shared_from_this() in constructor, since
 /// shared_from_this() requires there to already be a shared_ptr.
-Server::Session::Session(asio::io_context* ctx, tcp::socket&& socket)
+Server::Session::Session(
+  asio::io_context* ctx,
+  tcp::socket&& socket,
+  std::chrono::milliseconds tick_interval
+)
   : _ctx(ctx),
     _socket(std::move(socket)),
     _client_message{},
     _position_message{.position = 0},
-    _tick_timer(*ctx)
+    _tick_timer(*ctx),
+    _tick_interval(tick_interval)
 {}
 
-std::shared_ptr<Server::Session>
-Server::Session::create(asio::io_context* ctx, tcp::socket&& socket)
+std::shared_ptr<Server::Session> Server::Session::create(
+  asio::io_context* ctx,
+  tcp::socket&& socket,
+  std::chrono::milliseconds tick_interval
+)
 {
-    return std::shared_ptr<Session>(new Session(ctx, std::move(socket)));
+    return std::shared_ptr<Session>(
+      new Session(ctx, std::move(socket), tick_interval)
+    );
 }
 
 void Server::Session::begin()
@@ -32,7 +42,7 @@ void Server::Session::async_tick()
 {
     auto self(shared_from_this());
 
-    _tick_timer.expires_after(std::chrono::seconds(1));
+    _tick_timer.expires_after(_tick_interval);
 
     _tick_timer.async_wait([this, self](std::error_code ec) {
         if (ec) {
@@ -100,8 +110,15 @@ void Server::Session::async_read()
     );
 }
 
-Server::Server(tcp::endpoint const& endpoint)
-  : _acceptor(_ctx, endpoint)
+// TODO: ClangFormat changes
+//  - I want fn params to be on own line if they aren't on the first line all
+//  together
+//  - I want const on the right for params, but on the left for locals
+Server::Server(
+  tcp::endpoint const& endpoint, std::chrono::milliseconds tick_interval
+)
+  : _acceptor(_ctx, endpoint),
+    _tick_interval(tick_interval)
 {}
 
 Server::~Server()
@@ -150,6 +167,6 @@ void Server::async_accept()
           socket.remote_endpoint().address().to_string()
         );
 
-        Session::create(&_ctx, std::move(socket))->begin();
+        Session::create(&_ctx, std::move(socket), _tick_interval)->begin();
     });
 }

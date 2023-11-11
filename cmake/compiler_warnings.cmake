@@ -17,6 +17,7 @@ option(BUILD_ENABLE_COMPILER_WARNINGS "Enable compiler warnings" ON)
 # Enable compiler warnings for the directory from which the function was called
 function(enable_compiler_warnings)
     set(warnings
+        "-Werror"
         "-Wall"
         "-Wextra"
 

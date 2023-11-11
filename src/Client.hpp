@@ -13,7 +13,7 @@
 class Client {
     asio::io_context* _ctx;
     asio::ip::tcp::socket _socket;
-    Position_Message _position;
+    std::atomic<Position_Message> _position;
     std::queue<Command_Message> _write_queue;
 
 public:
@@ -33,6 +33,11 @@ public:
 
     /// Write (enqueue) a message to be sent to the server
     void async_write(const Command_Message& message);
+
+    [[nodiscard]] int position() const
+    {
+        return _position.load().position;
+    }
 
 private:
     void async_connect(asio::ip::tcp::resolver::results_type const& endpoints);

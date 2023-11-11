@@ -91,7 +91,7 @@ void Client::async_read()
 {
     asio::async_read(
       _socket,
-      asio::buffer(&_position, _position.size()),
+      asio::buffer(&_position, _position.load().size()),
       [this](std::error_code ec, std::size_t bytes_read) {
           if (ec) {
               spdlog::error("[client] async_read: {}", ec.message());
@@ -100,7 +100,7 @@ void Client::async_read()
               return;
           }
 
-          spdlog::info("[client] recv: {} ({}B)", _position.position, bytes_read);
+          spdlog::info("[client] recv: {} ({}B)", _position.load().position, bytes_read);
 
           async_read();
       }

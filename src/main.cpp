@@ -18,8 +18,10 @@ class AsyncServer {
     std::jthread _thread;
 
 public:
-    explicit AsyncServer(const tcp::endpoint& endpoint)
-      : _server(endpoint),
+    explicit AsyncServer(
+      const tcp::endpoint& endpoint, std::chrono::milliseconds tick_interval
+    )
+      : _server(endpoint, tick_interval),
         _thread([this] {
             _server.start();
         })
@@ -46,6 +48,13 @@ public:
     ~AsyncClient() { _ctx->stop(); }
 };
 
+struct Color {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
+
 int main(int argc, char* argv[])
 {
     const std::span args(argv, static_cast<unsigned long>(argc));
@@ -65,7 +74,7 @@ int main(int argc, char* argv[])
     // process, but to simplify testing a little bit, we're going to spawn it as
     // a thread. We will still communicate with it over the network, however.
     AsyncServer const async_server(
-      tcp::endpoint(tcp::v4(), static_cast<unsigned short>(std::stoul(port)))
+      tcp::endpoint(tcp::v4(), static_cast<unsigned short>(std::stoul(port))), 1000ms
     );
 
     // Run the client's session/event loop with the server on its own thread. This
@@ -78,7 +87,7 @@ int main(int argc, char* argv[])
 
     SDL::initialize(SDL_INIT_EVENTS);
 
-    static constexpr int screen_height = 640;
+    static constexpr int screen_height = 480;
     static constexpr int screen_width = 480;
 
     SDL::Window_ptr const window(SDL_CreateWindow(
@@ -94,10 +103,21 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Surface* screen_surface = SDL::GetWindowSurface(window.get());
-    if (screen_surface == nullptr) {
+    const SDL::Renderer_ptr renderer(
+      SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)
+    );
+    if (!renderer) {
+        spdlog::error(
+          "SDL_CreateRenderer: failed to create renderer: {}", SDL_GetError()
+        );
         return 1;
     }
+
+    SDL_Rect rectangle{
+      .x = screen_width / 4,
+      .y = screen_height / 4,
+      .w = screen_width / 2,
+      .h = screen_height / 2};
 
     SDL_Event event;
 
@@ -124,8 +144,20 @@ int main(int argc, char* argv[])
             }
         }
 
-        if (!SDL::UpdateWindowSurface(window.get())) {
-            return 1;
-        }
+        SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
+        SDL_RenderClear(renderer.get());
+
+        // Get the current offset from the client
+        const int offset = client.position();
+
+        // Offset the rectangle's position
+        rectangle.x = screen_width / 4 + offset;
+
+        // TODO: Change to circle
+        SDL_SetRenderDrawColor(renderer.get(), 0, 0, 255, 255);
+        SDL_RenderDrawRect(renderer.get(), &rectangle);
+
+        // TODO: This could be renderer.present();
+        SDL_RenderPresent(renderer.get());
     }
 }
