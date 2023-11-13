@@ -1,46 +1,26 @@
 #pragma once
 
 #include "common.hpp"
-#include "Message.hpp"
+#include "State_message.hpp"
 
-#include <asio.hpp>
-#include <spdlog/spdlog.h>
-
+#include <mutex>
 #include <queue>
-#include <string>
 
-/// @brief TODO
 class Client {
-    asio::io_context* _ctx;
-    asio::ip::tcp::socket _socket;
-    std::atomic<Position_Message> _position;
-    std::queue<Command_Message> _write_queue;
+    struct Message {
+        State_message message;
+        std::chrono::system_clock::time_point recv_timestamp;
+    };
+
+    std::mutex _queue_mutex;
+    std::vector<Message> _queue;
+
+    int _offset{0};
 
 public:
-    /// @brief Create a client and attempt to [async] connect, which starts the chain
-    /// of communication.
-    Client(asio::io_context* ctx, std::string_view host, std::string_view port);
+    void offset(int);
+    [[nodiscard]] int offset() const;
 
-    /// Closes connection with server if not already closed
-    ~Client();
-
-    DISABLE_CTOR(Client);
-    DISABLE_COPY(Client);
-    DISABLE_MOVE(Client);
-
-    /// Explicitly close the connection
-    void close();
-
-    /// Write (enqueue) a message to be sent to the server
-    void async_write(const Command_Message& message);
-
-    [[nodiscard]] int position() const
-    {
-        return _position.load().position;
-    }
-
-private:
-    void async_connect(asio::ip::tcp::resolver::results_type const& endpoints);
-
-    void async_read();
+    void process_server_messages();
+    void send(State_message const& msg, std::chrono::milliseconds delay);
 };

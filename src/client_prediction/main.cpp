@@ -1,58 +1,16 @@
 #include "Client.hpp"
-#include "Message.hpp"
 #include "SDL.hpp"
 #include "Server.hpp"
 
-#include <asio.hpp>
 #include <spdlog/spdlog.h>
 
 #include <iostream>
 #include <string>
 #include <thread>
 
-using asio::ip::tcp;
 using namespace std::chrono_literals;
 
-class Async_server {
-    Server _server;
-    std::jthread _thread;
-
-public:
-    explicit Async_server(
-      const tcp::endpoint& endpoint, std::chrono::milliseconds tick_interval
-    )
-      : _server(endpoint, tick_interval),
-        _thread([this] {
-            _server.start();
-        })
-    {}
-
-    ~Async_server() { _server.stop(); }
-
-    DISABLE_COPY(Async_server);
-    DISABLE_MOVE(Async_server);
-};
-
-class Async_client : public Client {
-    asio::io_context* _ctx;
-    std::jthread _thread;
-
-public:
-    explicit Async_client(
-      asio::io_context* ctx, std::string_view host, std::string_view port
-    )
-      : Client(ctx, host, port),
-        _ctx(ctx),
-        _thread([this] {
-            _ctx->run();
-        })
-    {}
-
-    ~Async_client() { _ctx->stop(); }
-
-    DISABLE_COPY(Async_client);
-    DISABLE_MOVE(Async_client);
-};
+// TODO: Change to updating speed/velocity on user input to calculate position
 
 int main(int argc, char* argv[])
 {
@@ -69,20 +27,21 @@ int main(int argc, char* argv[])
 
     spdlog::set_level(spdlog::level::debug);
 
-    // Create the server on its own thread. Normally the server would be its own
-    // process, but to simplify testing a little bit, we're going to spawn it as
-    // a thread. We will still communicate with it over the network, however.
-    Async_server const async_server(
-      tcp::endpoint(tcp::v4(), static_cast<unsigned short>(std::stoul(port))), 1000ms
-    );
+    Client client;
 
-    // Run the client's session/event loop with the server on its own thread. This
-    // thread asynchronously communicates with the server.
-    asio::io_context client_ctx;
-    Async_client client(&client_ctx, host, port);
+    // TODO: Configurable from CLI
+    static constexpr std::chrono::milliseconds network_delay{250ms};
+    static constexpr std::chrono::milliseconds server_tick_rate{500ms};
 
-    // Sleep for a very short amount of time so the event loops are ready
-    std::this_thread::sleep_for(10ms);
+    Server server(network_delay);
+    server.connect(&client);
+
+    const std::jthread server_thread([&server](const std::stop_token& stop_token) {
+        while (!stop_token.stop_requested()) {
+            server.update();
+            std::this_thread::sleep_for(server_tick_rate);
+        }
+    });
 
     SDL::initialize(SDL_INIT_EVENTS);
 
@@ -127,6 +86,8 @@ int main(int argc, char* argv[])
 
     // Game loop
     while (true) {
+        client.process_server_messages();
+
         // Poll event queue. When the queue is empty, this function returns 0.
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_QUIT) {
@@ -138,11 +99,11 @@ int main(int argc, char* argv[])
                 switch (event.key.keysym.sym) {
                     case SDLK_LEFT: {
                         spdlog::info("[user] LEFT");
-                        client.async_write({.command = Command::move_left});
+                        server.send({.command = Command::move_left}, network_delay);
                     } break;
                     case SDLK_RIGHT: {
                         spdlog::info("[user] RIGHT");
-                        client.async_write({.command = Command::move_right});
+                        server.send({.command = Command::move_right}, network_delay);
                     } break;
                 }
             }
@@ -152,7 +113,7 @@ int main(int argc, char* argv[])
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
         // Get the current offset from the client
-        const int offset = client.position();
+        const int offset = client.offset();
 
         // Offset the rectangle's position
         rectangle.x = initial_x + offset;

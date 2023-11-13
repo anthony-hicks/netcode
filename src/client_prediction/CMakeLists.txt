@@ -20,7 +20,6 @@ target_link_libraries(${target_name}
             SDL2::SDL2
             SDL2::SDL2main
             spdlog
-            asio
 )
 
 # .dll has to be in the same directory as the .exe
