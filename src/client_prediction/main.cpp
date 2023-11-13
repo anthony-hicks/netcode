@@ -4,8 +4,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <iostream>
-#include <string>
 #include <thread>
 
 using namespace std::chrono_literals;
@@ -14,22 +12,15 @@ using namespace std::chrono_literals;
 
 int main(int argc, char* argv[])
 {
-    const std::span args(argv, static_cast<unsigned long>(argc));
-
-    if (args.size() != 3) {
-        std::cerr << "usage: netcode <host> <port>\n";
-        return 1;
-    }
-
-    // TODO: Use a real CLI library, maybe Boost.ProgramOptions
-    std::string const host{args[1]};
-    std::string const port{args[2]};
+    (void)argc;
+    (void)argv;
 
     spdlog::set_level(spdlog::level::debug);
 
     Client client;
 
     // TODO: Configurable from CLI
+    // TODO: Use a real CLI library, maybe Boost.ProgramOptions
     static constexpr std::chrono::milliseconds network_delay{250ms};
     static constexpr std::chrono::milliseconds server_tick_rate{500ms};
 
