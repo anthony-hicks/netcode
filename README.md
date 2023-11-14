@@ -8,10 +8,10 @@ application utilizing latency compensation.
 ## Roadmap
 1. ~~Basic application handling keyboard input and sending real network messages
 between a client and server (dumb client)~~
-2. Graphics for player 1 client view of a circle
-3. Add intentional server delay and/or tick rate to make differences more noticeable
-4. Client-side prediction
-5. Server reconciliation
+2. ~~Graphics for player 1 client view of a circle~~
+3. ~~Add intentional server delay and/or tick rate to make differences more noticeable~~
+4. ~~Client-side prediction~~
+5. ~~Server reconciliation~~
 6. Entity interpolation
 7. Graphics for server view
 8. Networking for player 2 client, which only receives the position of player 1
