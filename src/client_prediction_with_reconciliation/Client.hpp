@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "Command_message.hpp"
 #include "State_message.hpp"
 
 #include <mutex>
@@ -17,10 +18,13 @@ class Client {
 
     double _offset{0.0};
 
+    std::vector<Client_message> _unacknowledged_messages;
+
 public:
     void offset(double);
     [[nodiscard]] double offset() const;
 
     void process_server_messages();
     void send(State_message const& msg, std::chrono::milliseconds delay);
+    void save(Client_message const& msg);
 };

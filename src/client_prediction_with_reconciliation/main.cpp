@@ -19,11 +19,19 @@ int main(int argc, char* argv[])
 
     Client client;
 
+    // TODO: Still need to solve key-repeat issue. Maybe on keydown activate
+    //  a 'pressed state' and process. Then on next loop iteration, which should be
+    //  before key-repeat occurs, if we are in that pressed state (but not key down yet)
+    //  then process per usual.
+    //
+    //  Need a move_left and move_right bool that get toggled based on a key down/up
+    //  event.
+
     // TODO: Configurable from CLI
     // TODO: Use a real CLI library, maybe Boost.ProgramOptions
     static constexpr std::chrono::milliseconds network_delay{250ms};
     static constexpr std::chrono::milliseconds server_tick_rate{500ms};
-    static constexpr seconds_d client_update_interval{static_cast<double>(1) / 60};
+    static constexpr seconds_d client_update_interval{static_cast<double>(1) / 30};
 
     Server server(network_delay);
     server.connect(&client);
@@ -74,6 +82,8 @@ int main(int argc, char* argv[])
 
     auto last_frame_time = std::chrono::steady_clock::now();
 
+    uint32_t sequence_number{0};
+
     // Game loop
     while (true) {
         client.process_server_messages();
@@ -96,23 +106,36 @@ int main(int argc, char* argv[])
                     case SDLK_LEFT: {
                         spdlog::info("[user] LEFT");
 
-                        server.send({.duration = -frame_duration_s}, network_delay);
+                        Client_message const msg{
+                          .duration = -frame_duration_s,
+                          .sequence_number = ++sequence_number};
+                        server.send(msg, network_delay);
                         client.offset(
                           update_position(client.offset(), -frame_duration_s.count())
                         );
+                        client.save(msg);
                     } break;
                     case SDLK_RIGHT: {
                         spdlog::info("[user] RIGHT");
-                        server.send({.duration = frame_duration_s}, network_delay);
+
+                        Client_message const msg{
+                          .duration = frame_duration_s,
+                          .sequence_number = ++sequence_number};
+                        server.send(msg, network_delay);
                         client.offset(
                           update_position(client.offset(), frame_duration_s.count())
                         );
+
+                        // TODO: Revisit all names of things
+                        client.save(msg);
                     } break;
                 }
             }
         }
 
-        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255);
+        RETURN_IF_SDL_ERROR(
+          SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255
+        );
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
         // Get the current offset from the client

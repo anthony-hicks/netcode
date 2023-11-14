@@ -21,7 +21,7 @@ class Server {
     std::vector<Message> _queue;
     std::chrono::milliseconds _network_delay;
 
-    State_message _state{.position = 0};
+    State_message _state{.position = 0, .last_processed_sequence_number = 0};
 
 public:
     explicit Server(std::chrono::milliseconds network_delay);

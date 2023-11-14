@@ -34,11 +34,12 @@ void Server::update()
 
         for (const auto& msg : _queue) {
             if (msg.recv_timestamp <= std::chrono::system_clock::now()) {
-                spdlog::info("[server] recv: {}", msg.message.duration.count());
+                spdlog::info("[server] recv: (seq={}, duration={:.3f})", msg.message.sequence_number, msg.message.duration.count());
 
+                _state.last_processed_sequence_number = msg.message.sequence_number;
                 _state.position = update_position(_state.position, msg.message.duration.count());
 
-                spdlog::info("[server] update: position = {}", _state.position);
+                spdlog::info("[server] update: position = {:.3f}", _state.position);
             }
         }
 
