@@ -97,10 +97,16 @@ int main(int argc, char* argv[])
                         spdlog::info("[user] LEFT");
 
                         server.send({.duration = -frame_duration_s}, network_delay);
+                        client.offset(
+                          update_position(client.offset(), -frame_duration_s.count())
+                        );
                     } break;
                     case SDLK_RIGHT: {
                         spdlog::info("[user] RIGHT");
                         server.send({.duration = frame_duration_s}, network_delay);
+                        client.offset(
+                          update_position(client.offset(), frame_duration_s.count())
+                        );
                     } break;
                 }
             }
