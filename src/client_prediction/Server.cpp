@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+#include "Utils.hpp"
+
 #include <spdlog/spdlog.h>
 
 using namespace std::chrono_literals;
@@ -13,7 +15,7 @@ void Server::connect(Client* client)
     _clients.push_back(client);
 }
 
-void Server::send(const Command_message& cmd, std::chrono::milliseconds delay)
+void Server::send(const Client_message& cmd, std::chrono::milliseconds delay)
 {
     const Message msg{
       .message = cmd, .recv_timestamp = std::chrono::system_clock::now() + delay};
@@ -32,16 +34,9 @@ void Server::update()
 
         for (const auto& msg : _queue) {
             if (msg.recv_timestamp <= std::chrono::system_clock::now()) {
-                spdlog::info("[server] recv: {}", to_string(msg.message.command));
+                spdlog::info("[server] recv: {}", msg.message.duration.count());
 
-                switch (msg.message.command) {
-                    case Command::move_left:
-                        _state.position -= 1;
-                        break;
-                    case Command::move_right:
-                        _state.position += 1;
-                        break;
-                }
+                _state.position = update_position(_state.position, msg.message.duration.count());
 
                 spdlog::info("[server] update: position = {}", _state.position);
             }

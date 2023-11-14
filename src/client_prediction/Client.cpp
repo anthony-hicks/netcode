@@ -30,12 +30,12 @@ void Client::process_server_messages()
     });
 }
 
-int Client::offset() const
+double Client::offset() const
 {
     return _offset;
 }
 
-void Client::offset(int offset)
+void Client::offset(double offset)
 {
     _offset = offset;
 }

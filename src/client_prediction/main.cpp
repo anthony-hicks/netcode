@@ -1,14 +1,14 @@
 #include "Client.hpp"
 #include "SDL.hpp"
 #include "Server.hpp"
+#include "Utils.hpp"
 
 #include <spdlog/spdlog.h>
 
 #include <thread>
 
 using namespace std::chrono_literals;
-
-// TODO: Change to updating speed/velocity on user input to calculate position
+using seconds_d = std::chrono::duration<double>;
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
     // TODO: Use a real CLI library, maybe Boost.ProgramOptions
     static constexpr std::chrono::milliseconds network_delay{250ms};
     static constexpr std::chrono::milliseconds server_tick_rate{500ms};
+    static constexpr seconds_d client_update_interval{static_cast<double>(1) / 60};
 
     Server server(network_delay);
     server.connect(&client);
@@ -67,17 +68,21 @@ int main(int argc, char* argv[])
     constexpr int initial_x = screen_center_x - rect_width / 2;
     constexpr int y = (screen_height - rect_height) / 2;
 
-    SDL_Rect rectangle{
-      .x = initial_x,
-      .y = y,
-      .w = rect_width,
-      .h = rect_height};
+    SDL_Rect rectangle{.x = initial_x, .y = y, .w = rect_width, .h = rect_height};
 
     SDL_Event event;
+
+    auto last_frame_time = std::chrono::steady_clock::now();
 
     // Game loop
     while (true) {
         client.process_server_messages();
+
+        // Compute the duration of the last frame, so we can determine
+        // how far the player should move
+        auto now = std::chrono::steady_clock::now();
+        auto frame_duration_s = seconds_d{now - last_frame_time};
+        last_frame_time = now;
 
         // Poll event queue. When the queue is empty, this function returns 0.
         while (SDL_PollEvent(&event) != 0) {
@@ -90,11 +95,12 @@ int main(int argc, char* argv[])
                 switch (event.key.keysym.sym) {
                     case SDLK_LEFT: {
                         spdlog::info("[user] LEFT");
-                        server.send({.command = Command::move_left}, network_delay);
+
+                        server.send({.duration = -frame_duration_s}, network_delay);
                     } break;
                     case SDLK_RIGHT: {
                         spdlog::info("[user] RIGHT");
-                        server.send({.command = Command::move_right}, network_delay);
+                        server.send({.duration = frame_duration_s}, network_delay);
                     } break;
                 }
             }
@@ -104,10 +110,10 @@ int main(int argc, char* argv[])
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
         // Get the current offset from the client
-        const int offset = client.offset();
+        const double offset = client.offset();
 
         // Offset the rectangle's position
-        rectangle.x = initial_x + offset;
+        rectangle.x = static_cast<int>(std::round(initial_x + offset));
 
         // TODO: Change to circle
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
@@ -115,5 +121,7 @@ int main(int argc, char* argv[])
 
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());
+
+        std::this_thread::sleep_for(client_update_interval);
     }
 }

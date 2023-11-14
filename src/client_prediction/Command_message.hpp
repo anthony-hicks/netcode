@@ -1,23 +1,7 @@
 #pragma once
 
-#include <stdexcept>
+#include <chrono>
 
-enum class Command {
-    move_left,
-    move_right
+struct Client_message {
+    std::chrono::duration<double> duration;
 };
-
-struct Command_message {
-    Command command;
-};
-
-inline const char* to_string(Command command) {
-    switch (command) {
-        case Command::move_left:
-            return "move left";
-        case Command::move_right:
-            return "move right";
-        default:
-            throw std::runtime_error("invalid enum");
-    }
-}

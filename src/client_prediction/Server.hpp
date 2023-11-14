@@ -12,7 +12,7 @@
 
 class Server {
     struct Message {
-        Command_message message;
+        Client_message message;
         std::chrono::system_clock::time_point recv_timestamp;
     };
 
@@ -26,6 +26,6 @@ class Server {
 public:
     explicit Server(std::chrono::milliseconds network_delay);
     void connect(Client* client);
-    void send(Command_message const& msg, std::chrono::milliseconds delay);
+    void send(Client_message const& msg, std::chrono::milliseconds delay);
     void update();
 };
