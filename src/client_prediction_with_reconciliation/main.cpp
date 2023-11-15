@@ -17,21 +17,13 @@ int main(int argc, char* argv[])
 
     spdlog::set_level(spdlog::level::debug);
 
-    Client client;
-
-    // TODO: Still need to solve key-repeat issue. Maybe on keydown activate
-    //  a 'pressed state' and process. Then on next loop iteration, which should be
-    //  before key-repeat occurs, if we are in that pressed state (but not key down yet)
-    //  then process per usual.
-    //
-    //  Need a move_left and move_right bool that get toggled based on a key down/up
-    //  event.
-
     // TODO: Configurable from CLI
     // TODO: Use a real CLI library, maybe Boost.ProgramOptions
     static constexpr std::chrono::milliseconds network_delay{250ms};
     static constexpr std::chrono::milliseconds server_tick_rate{500ms};
     static constexpr seconds_d client_update_interval{static_cast<double>(1) / 30};
+
+    Client client;
 
     Server server(network_delay);
     server.connect(&client);
@@ -79,6 +71,8 @@ int main(int argc, char* argv[])
     SDL_Rect rectangle{.x = initial_x, .y = y, .w = rect_width, .h = rect_height};
 
     SDL_Event event;
+    bool left_key_pressed = false;
+    bool right_key_pressed = false;
 
     auto last_frame_time = std::chrono::steady_clock::now();
 
@@ -101,41 +95,39 @@ int main(int argc, char* argv[])
                 return 0;
             }
 
-            if (event.type == SDL_KEYDOWN) {
-                switch (event.key.keysym.sym) {
-                    case SDLK_LEFT: {
-                        spdlog::info("[user] LEFT");
-
-                        Client_message const msg{
-                          .duration = -frame_duration_s,
-                          .sequence_number = ++sequence_number};
-                        server.send(msg, network_delay);
-                        client.offset(
-                          update_position(client.offset(), -frame_duration_s.count())
-                        );
-                        client.save(msg);
-                    } break;
-                    case SDLK_RIGHT: {
-                        spdlog::info("[user] RIGHT");
-
-                        Client_message const msg{
-                          .duration = frame_duration_s,
-                          .sequence_number = ++sequence_number};
-                        server.send(msg, network_delay);
-                        client.offset(
-                          update_position(client.offset(), frame_duration_s.count())
-                        );
-
-                        // TODO: Revisit all names of things
-                        client.save(msg);
-                    } break;
-                }
+            if (event.key.keysym.sym == SDLK_LEFT) {
+                spdlog::info("[user] LEFT");
+                left_key_pressed = event.type == SDL_KEYDOWN;
             }
+            else if (event.key.keysym.sym == SDLK_RIGHT) {
+                spdlog::info("[user] RIGHT");
+                right_key_pressed = event.type == SDL_KEYDOWN;
+            }
+        }
+
+        if (left_key_pressed) {
+            Client_message const msg{
+              .duration = -frame_duration_s, .sequence_number = ++sequence_number};
+            server.send(msg, network_delay);
+            client.offset(update_position(client.offset(), -frame_duration_s.count())
+            );
+            client.save(msg);
+        }
+        else if (right_key_pressed) {
+            Client_message const msg{
+              .duration = frame_duration_s, .sequence_number = ++sequence_number};
+            server.send(msg, network_delay);
+            client.offset(update_position(client.offset(), frame_duration_s.count())
+            );
+
+            // TODO: Revisit all names of things
+            client.save(msg);
         }
 
         RETURN_IF_SDL_ERROR(
           SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255
         );
+
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
         // Get the current offset from the client
