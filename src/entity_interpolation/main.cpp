@@ -24,9 +24,11 @@ int main(int argc, char* argv[])
     static constexpr seconds_d client_update_interval{static_cast<double>(1) / 30};
 
     Client client;
+    Client spectator;
 
     Server server(network_delay);
     server.connect(&client);
+    server.connect(&spectator);
 
     const std::jthread server_thread([&server](const std::stop_token& stop_token) {
         while (!stop_token.stop_requested()) {
@@ -69,6 +71,7 @@ int main(int argc, char* argv[])
     constexpr int y = (screen_height - rect_height) / 2;
 
     SDL_Rect rectangle{.x = initial_x, .y = y, .w = rect_width, .h = rect_height};
+    SDL_Rect spectator_rect = rectangle;
 
     SDL_Event event;
     bool left_key_pressed = false;
@@ -81,6 +84,7 @@ int main(int argc, char* argv[])
     // Game loop
     while (true) {
         client.process_server_messages();
+        spectator.process_server_messages();
 
         // Compute the duration of the last frame, so we can determine
         // how far the player should move
@@ -130,15 +134,19 @@ int main(int argc, char* argv[])
 
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
-        // Get the current offset from the client
-        const double offset = client.offset();
-
         // Offset the rectangle's position
-        rectangle.x = static_cast<int>(std::round(initial_x + offset));
+        rectangle.x = static_cast<int>(std::round(initial_x + client.offset()));
+
+        // Offset the spectator view
+        spectator_rect.x = static_cast<int>(std::round(initial_x + spectator.offset()));
 
         // TODO: Change to circle
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
         RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &rectangle);
+
+        // Draw spectator view of p1
+        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 0, 0, 255);
+        RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &spectator_rect);
 
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());
