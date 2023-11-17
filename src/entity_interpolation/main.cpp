@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     SDL::initialize(SDL_INIT_EVENTS);
 
     static constexpr int screen_height = 240;
-    static constexpr int screen_width = 750;
+    static constexpr int screen_width = 1450;
 
     SDL::Window_ptr const window(SDL_CreateWindow(
       "Demo",
