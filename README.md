@@ -19,6 +19,8 @@ between a client and server (dumb client)~~
 10. Toggleable GUI for each technique and latency/tick rate
 11. Add latency compensation
 12. Add graphics to enhance demonstration
+13. Add variable timestep and velocity-based position calculation to all programs
+13. Add gifs to repo front page
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)
