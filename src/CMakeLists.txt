@@ -1,3 +1,4 @@
 add_subdirectory(dumb_client)
 add_subdirectory(client_prediction)
 add_subdirectory(client_prediction_with_reconciliation)
+add_subdirectory(entity_interpolation)
