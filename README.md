@@ -22,6 +22,7 @@ between a client and server (dumb client)~~
 13. Add variable timestep and velocity-based position calculation to all programs
 14. Add gifs to repo front page
 15. Handle any number of entities
+16. Add references
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)
