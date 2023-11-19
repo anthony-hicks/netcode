@@ -82,10 +82,10 @@ Client::find_surrounding_updates(
     return std::nullopt;
 }
 
-void Client::interpolate_entities(const milliseconds_d server_update_interval)
+void Client::interpolate_entities(const milliseconds_d server_update_interval,
+                                  const std::size_t delay_in_ticks)
 {
-    static constexpr int delay_ticks{1};
-    const auto delay = delay_ticks * server_update_interval;
+    const auto delay = delay_in_ticks * server_update_interval;
 
     const auto now = std::chrono::system_clock::now();
 
@@ -94,7 +94,7 @@ void Client::interpolate_entities(const milliseconds_d server_update_interval)
 
     // Must have at least the number of ticks we want to delay rendering by + 1, so
     // we have an update prior the render time that we could interpolate from.
-    if (_updates.size() > delay_ticks) {
+    if (_updates.size() > delay_in_ticks) {
         std::optional<std::pair<Update, Update>> surrounding_updates =
           find_surrounding_updates(render_time);
 

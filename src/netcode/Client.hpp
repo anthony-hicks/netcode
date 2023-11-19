@@ -40,7 +40,7 @@ public:
     void process_server_messages();
     void send(State_message const& msg, std::chrono::milliseconds delay);
     void save(Client_message const& msg);
-    void interpolate_entities(milliseconds_d server_update_interval);
+    void interpolate_entities(milliseconds_d server_update_interval, std::size_t delay_in_ticks);
 
 private:
     [[nodiscard]] std::optional<std::pair<Update, Update>>

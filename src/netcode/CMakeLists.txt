@@ -1,6 +1,6 @@
 enable_compiler_warnings()
 
-set(target_name entity_interpolation)
+set(target_name netcode)
 
 # WARNING: setting the WIN32 keyword here completely disables
 # any console output: add_executable(netcode WIN32 ...)
@@ -17,6 +17,7 @@ add_executable(${target_name}
 
 target_link_libraries(${target_name}
         PRIVATE
+            CLI11::CLI11
             SDL2::SDL2
             SDL2::SDL2main
             spdlog

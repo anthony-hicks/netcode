@@ -3,6 +3,7 @@
 #include "Server.hpp"
 #include "Utils.hpp"
 
+#include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 
 #include <thread>
@@ -12,20 +13,27 @@ using seconds_d = std::chrono::duration<double>;
 
 int main(int argc, char* argv[])
 {
-    (void)argc;
-    (void)argv;
+    CLI::App app;
+
+    std::chrono::milliseconds network_delay{250ms};
+
+    // Runescape server update rate
+    double server_update_rate_hz{1.67};
+
+    double client_update_rate_hz{30};
+    std::size_t interpolation_tick_delay{1};
+
+    app.add_option("--delay", network_delay, "Network delay in ms between any client and the server");
+    app.add_option("--tick-rate", server_update_rate_hz, "Server tick rate in hz");
+    app.add_option("--client-rate", client_update_rate_hz, "Client update rate in hz");
+    app.add_option("--interp-delay", interpolation_tick_delay, "Number of ticks to delay entities for interpolation");
+
+    CLI11_PARSE(app, argc, argv);
 
     spdlog::set_level(spdlog::level::debug);
 
-    // TODO: Configurable from CLI
-    // TODO: Use a real CLI library, maybe Boost.ProgramOptions
-    static constexpr std::chrono::milliseconds network_delay{250ms};
-
-    constexpr double server_update_rate_hz{1.67};
-    constexpr int client_update_rate_hz{30};
-
-    constexpr milliseconds_d server_update_interval{seconds_d{1.0 / server_update_rate_hz}};
-    constexpr milliseconds_d client_update_interval{seconds_d{1.0 / client_update_rate_hz}};
+    const milliseconds_d server_update_interval{seconds_d{1.0 / server_update_rate_hz}};
+    const milliseconds_d client_update_interval{seconds_d{1.0 / client_update_rate_hz}};
 
     Client client;
     Client spectator;
@@ -119,24 +127,32 @@ int main(int argc, char* argv[])
             Client_message const msg{
               .duration = -frame_duration_s, .sequence_number = ++sequence_number};
             server.send(msg, network_delay);
+
+            // Client prediction
             client.offset(update_position(client.offset(), -frame_duration_s.count())
             );
+
+            // Reconciliation
             client.save(msg);
         }
         else if (right_key_pressed) {
             Client_message const msg{
               .duration = frame_duration_s, .sequence_number = ++sequence_number};
             server.send(msg, network_delay);
+
+            // [client prediction] Immediately apply the input
             client.offset(update_position(client.offset(), frame_duration_s.count())
             );
 
             // TODO: Revisit all names of things
+            // TODO: Finish docs
+            // [reconciliation] Save the
             client.save(msg);
         }
 
         // NOTE: Normally all clients would interpolate, but since we only have
         //  one entity in our world, then only the spectator needs to interpolate.
-        spectator.interpolate_entities(server_update_interval);
+        spectator.interpolate_entities(server_update_interval, interpolation_tick_delay);
 
         RETURN_IF_SDL_ERROR(
           SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255

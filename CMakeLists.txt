@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(${CMAKE_SOURCE_DIR}/cmake/CPM.cmake)
-
 CPMAddPackage(
         NAME SDL2
         VERSION 2.28.4
@@ -16,6 +15,7 @@ CPMAddPackage(
         EXCLUDE_FROM_ALL TRUE
 )
 
+CPMAddPackage("gh:CLIUtils/CLI11@2.3.2")
 CPMAddPackage("gh:gabime/spdlog@1.12.0")
 find_package(Threads REQUIRED)
 CPMAddPackage("gh:chriskohlhoff/asio#asio-1-28-0@1.28.0")
