@@ -20,22 +20,28 @@ int main(int argc, char* argv[])
     // TODO: Configurable from CLI
     // TODO: Use a real CLI library, maybe Boost.ProgramOptions
     static constexpr std::chrono::milliseconds network_delay{250ms};
-    static constexpr std::chrono::milliseconds server_tick_rate{500ms};
-    static constexpr seconds_d client_update_interval{static_cast<double>(1) / 30};
+
+    constexpr int server_update_rate_hz{2};
+    constexpr int client_update_rate_hz{30};
+
+    constexpr milliseconds_d server_update_interval{seconds_d{1.0 / server_update_rate_hz}};
+    constexpr milliseconds_d client_update_interval{seconds_d{1.0 / client_update_rate_hz}};
 
     Client client;
     Client spectator;
 
     Server server(network_delay);
-    server.connect(&client);
-    server.connect(&spectator);
+    client.id(server.connect(&client));
+    spectator.id(server.connect(&spectator));
 
-    const std::jthread server_thread([&server](const std::stop_token& stop_token) {
-        while (!stop_token.stop_requested()) {
-            server.update();
-            std::this_thread::sleep_for(server_tick_rate);
-        }
-    });
+    const std::jthread server_thread(
+      [&server, &server_update_interval](const std::stop_token& stop_token) {
+          while (!stop_token.stop_requested()) {
+              server.update();
+              std::this_thread::sleep_for(server_update_interval);
+          }
+      }
+    );
 
     SDL::initialize(SDL_INIT_EVENTS);
 
@@ -128,6 +134,10 @@ int main(int argc, char* argv[])
             client.save(msg);
         }
 
+        // NOTE: Normally all clients would interpolate, but since we only have
+        //  one entity in our world, then only the spectator needs to interpolate.
+        spectator.interpolate_entities(server_update_interval);
+
         RETURN_IF_SDL_ERROR(
           SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255
         );
@@ -138,7 +148,8 @@ int main(int argc, char* argv[])
         rectangle.x = static_cast<int>(std::round(initial_x + client.offset()));
 
         // Offset the spectator view
-        spectator_rect.x = static_cast<int>(std::round(initial_x + spectator.offset()));
+        spectator_rect.x =
+          static_cast<int>(std::round(initial_x + spectator.offset()));
 
         // TODO: Change to circle
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);

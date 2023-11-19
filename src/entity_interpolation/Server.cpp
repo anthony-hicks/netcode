@@ -10,9 +10,10 @@ Server::Server(std::chrono::milliseconds network_delay)
   : _network_delay(network_delay)
 {}
 
-void Server::connect(Client* client)
+std::size_t Server::connect(Client* client)
 {
     _clients.push_back(client);
+    return _clients.size();
 }
 
 void Server::send(const Client_message& cmd, std::chrono::milliseconds delay)
@@ -33,6 +34,8 @@ void Server::update()
         const std::scoped_lock lock(_queue_mutex);
 
         for (const auto& msg : _queue) {
+
+            // Only process messages that get past the network delay
             if (msg.recv_timestamp <= std::chrono::system_clock::now()) {
                 spdlog::info("[server] recv: (seq={}, duration={:.3f})", msg.message.sequence_number, msg.message.duration.count());
 

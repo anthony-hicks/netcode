@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #define DECLARE_COPY(T, keyword)                                                    \
     T(T const&) = keyword;                                                          \
     T& operator=(T const&) = keyword
@@ -19,3 +21,5 @@
 
 #define DEFAULT_CTOR(T) DECLARE_CTOR(T, default)
 #define DISABLE_CTOR(T) DECLARE_CTOR(T, delete)
+
+using milliseconds_d = std::chrono::duration<double, std::milli>;

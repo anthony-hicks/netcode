@@ -12,15 +12,16 @@ between a client and server (dumb client)~~
 3. ~~Add intentional server delay and/or tick rate to make differences more noticeable~~
 4. ~~Client-side prediction~~
 5. ~~Server reconciliation~~
-6. Entity interpolation
+6. ~~Entity interpolation~~
 7. Graphics for server view
-8. Networking for player 2 client, which only receives the position of player 1
-9. Graphics for player 2 view
+8. ~~Networking for player 2 client, which only receives the position of player 1~~
+9. ~~Graphics for player 2 view~~
 10. Toggleable GUI for each technique and latency/tick rate
 11. Add latency compensation
 12. Add graphics to enhance demonstration
 13. Add variable timestep and velocity-based position calculation to all programs
-13. Add gifs to repo front page
+14. Add gifs to repo front page
+15. Handle any number of entities
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)
