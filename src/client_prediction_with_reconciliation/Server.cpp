@@ -10,9 +10,10 @@ Server::Server(std::chrono::milliseconds network_delay)
   : _network_delay(network_delay)
 {}
 
-void Server::connect(Client* client)
+std::size_t Server::connect(Client* client)
 {
     _clients.push_back(client);
+    return _clients.size();
 }
 
 void Server::send(const Client_message& cmd, std::chrono::milliseconds delay)

@@ -25,7 +25,7 @@ class Server {
 
 public:
     explicit Server(std::chrono::milliseconds network_delay);
-    void connect(Client* client);
+    std::size_t connect(Client* client);
     void send(Client_message const& msg, std::chrono::milliseconds delay);
     void update();
 };

@@ -151,13 +151,13 @@ int main(int argc, char* argv[])
         spectator_rect.x =
           static_cast<int>(std::round(initial_x + spectator.offset()));
 
-        // TODO: Change to circle
-        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
-        RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &rectangle);
-
         // Draw spectator view of p1
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 0, 0, 255);
         RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &spectator_rect);
+
+        // TODO: Change to circle
+        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
+        RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &rectangle);
 
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());

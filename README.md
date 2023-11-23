@@ -18,8 +18,8 @@ between a client and server (dumb client)~~
 9. ~~Graphics for player 2 view~~
 10. Toggleable GUI for each technique and latency/tick rate
 11. Add latency compensation
-12. Add graphics to enhance demonstration
-13. Add variable timestep and velocity-based position calculation to all programs
+12. ~~Add graphics to enhance demonstration~~
+13. ~~Add variable timestep and velocity-based position calculation to all programs~~
 14. Add gifs to repo front page
 15. Handle any number of entities
 16. Add references

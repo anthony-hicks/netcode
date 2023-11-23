@@ -1,93 +1,59 @@
 #include "Client.hpp"
-#include "Message.hpp"
 #include "SDL.hpp"
 #include "Server.hpp"
 
-#include <asio.hpp>
+#include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 
-#include <iostream>
-#include <string>
 #include <thread>
 
-using asio::ip::tcp;
 using namespace std::chrono_literals;
-
-class Async_server {
-    Server _server;
-    std::jthread _thread;
-
-public:
-    explicit Async_server(
-      const tcp::endpoint& endpoint, std::chrono::milliseconds tick_interval
-    )
-      : _server(endpoint, tick_interval),
-        _thread([this] {
-            _server.start();
-        })
-    {}
-
-    ~Async_server() { _server.stop(); }
-
-    DISABLE_COPY(Async_server);
-    DISABLE_MOVE(Async_server);
-};
-
-class Async_client : public Client {
-    asio::io_context* _ctx;
-    std::jthread _thread;
-
-public:
-    explicit Async_client(
-      asio::io_context* ctx, std::string_view host, std::string_view port
-    )
-      : Client(ctx, host, port),
-        _ctx(ctx),
-        _thread([this] {
-            _ctx->run();
-        })
-    {}
-
-    ~Async_client() { _ctx->stop(); }
-
-    DISABLE_COPY(Async_client);
-    DISABLE_MOVE(Async_client);
-};
+using seconds_d = std::chrono::duration<double>;
 
 int main(int argc, char* argv[])
 {
-    const std::span args(argv, static_cast<unsigned long>(argc));
+    CLI::App app;
 
-    if (args.size() != 3) {
-        std::cerr << "usage: netcode <host> <port>\n";
-        return 1;
-    }
+    std::chrono::milliseconds network_delay{250ms};
 
-    // TODO: Use a real CLI library, maybe Boost.ProgramOptions
-    std::string const host{args[1]};
-    std::string const port{args[2]};
+    // Runescape server update rate
+    // 1.67 updates per second or every 0.6s
+    double server_update_rate_hz{1.67};
+
+    // 30 updates per second or every 0.033s / 33ms
+    double client_update_rate_hz{30};
+
+    app.add_option("--delay", network_delay, "Network delay in ms between any client and the server");
+    app.add_option("--tick-rate", server_update_rate_hz, "Server tick rate in hz");
+    app.add_option("--client-rate", client_update_rate_hz, "Client update rate in hz");
+
+    CLI11_PARSE(app, argc, argv);
 
     spdlog::set_level(spdlog::level::debug);
 
-    // Create the server on its own thread. Normally the server would be its own
-    // process, but to simplify testing a little bit, we're going to spawn it as
-    // a thread. We will still communicate with it over the network, however.
-    Async_server const async_server(
-      tcp::endpoint(tcp::v4(), static_cast<unsigned short>(std::stoul(port))), 1000ms
+    const milliseconds_d server_update_interval{seconds_d{1.0 / server_update_rate_hz}};
+    const milliseconds_d client_update_interval{seconds_d{1.0 / client_update_rate_hz}};
+
+    Client client;
+    Client spectator;
+
+    Server server(network_delay);
+    server.connect(&client);
+    server.connect(&spectator);
+
+    const std::jthread server_thread(
+      [&server, &server_update_interval](const std::stop_token& stop_token) {
+        while (!stop_token.stop_requested()) {
+            server.update();
+            std::this_thread::sleep_for(server_update_interval);
+        }
+      }
     );
-
-    // Run the client's session/event loop with the server on its own thread. This
-    // thread asynchronously communicates with the server.
-    asio::io_context client_ctx;
-    Async_client client(&client_ctx, host, port);
-
-    // Sleep for a very short amount of time so the event loops are ready
-    std::this_thread::sleep_for(10ms);
 
     SDL::initialize(SDL_INIT_EVENTS);
 
     static constexpr int screen_height = 240;
-    static constexpr int screen_width = 750;
+    static constexpr int screen_width = 1450;
 
     SDL::Window_ptr const window(SDL_CreateWindow(
       "Demo",
@@ -122,11 +88,25 @@ int main(int argc, char* argv[])
       .y = y,
       .w = rect_width,
       .h = rect_height};
+    SDL_Rect spectator_rect = rectangle;
 
     SDL_Event event;
+    bool left_key_pressed = false;
+    bool right_key_pressed = false;
+
+    auto last_frame_time = std::chrono::steady_clock::now();
 
     // Game loop
     while (true) {
+        client.process_server_messages();
+        spectator.process_server_messages();
+
+        // Compute the duration of the last frame, so we can determine
+        // how far the player should move
+        auto now = std::chrono::steady_clock::now();
+        auto frame_duration_s = seconds_d{now - last_frame_time};
+        last_frame_time = now;
+
         // Poll event queue. When the queue is empty, this function returns 0.
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_QUIT) {
@@ -134,28 +114,38 @@ int main(int argc, char* argv[])
                 return 0;
             }
 
-            if (event.type == SDL_KEYDOWN) {
-                switch (event.key.keysym.sym) {
-                    case SDLK_LEFT: {
-                        spdlog::info("[user] LEFT");
-                        client.async_write({.command = Command::move_left});
-                    } break;
-                    case SDLK_RIGHT: {
-                        spdlog::info("[user] RIGHT");
-                        client.async_write({.command = Command::move_right});
-                    } break;
-                }
+            if (event.key.keysym.sym == SDLK_LEFT) {
+                spdlog::info("[user] LEFT");
+                left_key_pressed = event.type == SDL_KEYDOWN;
             }
+            else if (event.key.keysym.sym == SDLK_RIGHT) {
+                spdlog::info("[user] RIGHT");
+                right_key_pressed = event.type == SDL_KEYDOWN;
+            }
+        }
+
+        if (left_key_pressed) {
+            Client_message const msg{.duration = -frame_duration_s};
+            server.send(msg, network_delay);
+        }
+        else if (right_key_pressed) {
+            Client_message const msg{.duration = frame_duration_s};
+            server.send(msg, network_delay);
         }
 
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255);
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
 
-        // Get the current offset from the client
-        const int offset = client.position();
-
         // Offset the rectangle's position
-        rectangle.x = initial_x + offset;
+        rectangle.x = static_cast<int>(std::round(initial_x + client.offset()));
+
+        // Offset the spectator view
+        spectator_rect.x =
+          static_cast<int>(std::round(initial_x + spectator.offset()));
+
+        // Draw spectator view of p1
+        RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 255, 0, 0, 255);
+        RETURN_IF_SDL_ERROR(SDL_RenderDrawRect, renderer.get(), &spectator_rect);
 
         // TODO: Change to circle
         RETURN_IF_SDL_ERROR(SDL_SetRenderDrawColor, renderer.get(), 0, 0, 255, 255);
@@ -163,5 +153,7 @@ int main(int argc, char* argv[])
 
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());
+
+        std::this_thread::sleep_for(client_update_interval);
     }
 }
