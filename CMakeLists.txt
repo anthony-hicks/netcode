@@ -42,13 +42,6 @@ target_include_directories(ImGUI_SDL2 SYSTEM PUBLIC
 CPMAddPackage("gh:CLIUtils/CLI11@2.3.2")
 CPMAddPackage("gh:gabime/spdlog@1.12.0")
 find_package(Threads REQUIRED)
-CPMAddPackage("gh:chriskohlhoff/asio#asio-1-28-0@1.28.0")
-if (asio_ADDED)
-        add_library(asio INTERFACE)
-        target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
-        target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
-        target_link_libraries(asio INTERFACE Threads::Threads)
-endif ()
 
 include(cmake/compiler_warnings.cmake)
 add_subdirectory(src)

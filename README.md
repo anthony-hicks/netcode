@@ -6,23 +6,23 @@ moved by the player via keyboard input. In the background there will be a client
 application utilizing latency compensation.
 
 ## Roadmap
-1. ~~Basic application handling keyboard input and sending real network messages
-between a client and server (dumb client)~~
-2. ~~Graphics for player 1 client view of a circle~~
-3. ~~Add intentional server delay and/or tick rate to make differences more noticeable~~
-4. ~~Client-side prediction~~
-5. ~~Server reconciliation~~
-6. ~~Entity interpolation~~
-7. Graphics for server view
-8. ~~Networking for player 2 client, which only receives the position of player 1~~
-9. ~~Graphics for player 2 view~~
-10. Toggleable GUI for each technique and latency/tick rate
-11. Add latency compensation
-12. ~~Add graphics to enhance demonstration~~
-13. ~~Add variable timestep and velocity-based position calculation to all programs~~
-14. Add gifs to repo front page
-15. Handle any number of entities
-16. Add references
+- [x] Basic application handling keyboard input and sending real network messages
+between a client and server (dumb client)
+- [x] Graphics for player 1 client view of a circle
+- [x] Add intentional server delay and/or tick rate to make differences more noticeable
+- [x] Client-side prediction
+- [x] Server reconciliation
+- [x] Entity interpolation
+- [ ] Graphics for server view
+- [x] Networking for player 2 client, which only receives the position of player 1
+- [x] Graphics for player 2 view
+- [x] Toggleable GUI for each technique and latency/tick rate
+- [ ] Add latency compensation
+- [x] Add graphics to enhance demonstration
+- [x] Add variable timestep and velocity-based position calculation to all programs
+- [ ] Add gifs to repo front page
+- [ ] Handle any number of entities
+- [ ] Add references
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)
@@ -30,10 +30,12 @@ between a client and server (dumb client)~~
 - entity interpolation
 
 ## Future
-- replace asio with handwritten modern C++ code 
-  - consider using getaddrinfo instead of traditional approach
-- use udp with custom reliability and congestion avoidance
-- interactive UI to toggle each technique as well as client lag and server update rate
+- refactor and clean up code to be more reusable
+- wrap SDL in idiomatic C++
+  - utilize some sort of Result<T, E> type to wrap the C layer
+    - boost::outcome
+    - https://github.com/bitwizeshift/result
+    - std::expected
 
 ## Setup
 ### Tools
