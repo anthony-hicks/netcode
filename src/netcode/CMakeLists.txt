@@ -18,6 +18,7 @@ add_executable(${target_name}
 target_link_libraries(${target_name}
         PRIVATE
             CLI11::CLI11
+            ImGUI_SDL2
             SDL2::SDL2
             SDL2::SDL2main
             spdlog

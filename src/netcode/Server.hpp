@@ -28,4 +28,5 @@ public:
     std::size_t connect(Client* client);
     void send(Client_message const& msg, std::chrono::milliseconds delay);
     void update();
+    void set_network_delay(std::chrono::milliseconds network_delay) { _network_delay = network_delay; }
 };

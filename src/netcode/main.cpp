@@ -4,6 +4,9 @@
 #include "Utils.hpp"
 
 #include <CLI/CLI.hpp>
+#include <imgui.h>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_sdlrenderer2.h>
 #include <spdlog/spdlog.h>
 
 #include <thread>
@@ -15,25 +18,34 @@ int main(int argc, char* argv[])
 {
     CLI::App app;
 
-    std::chrono::milliseconds network_delay{250ms};
+    int network_delay_ms{250};
+    std::chrono::milliseconds network_delay{network_delay_ms};
 
-    // Runescape server update rate
-    double server_update_rate_hz{1.67};
-
-    double client_update_rate_hz{30};
+    float server_update_rate_hz{1.67f};
+    float client_update_rate_hz{20};
     std::size_t interpolation_tick_delay{1};
 
-    app.add_option("--delay", network_delay, "Network delay in ms between any client and the server");
+    app.add_option(
+      "--delay",
+      network_delay,
+      "Network delay in ms between any client and the server"
+    );
     app.add_option("--tick-rate", server_update_rate_hz, "Server tick rate in hz");
-    app.add_option("--client-rate", client_update_rate_hz, "Client update rate in hz");
-    app.add_option("--interp-delay", interpolation_tick_delay, "Number of ticks to delay entities for interpolation");
+    app.add_option(
+      "--client-rate", client_update_rate_hz, "Client update rate in hz"
+    );
+    app.add_option(
+      "--interp-delay",
+      interpolation_tick_delay,
+      "Number of ticks to delay entities for interpolation"
+    );
 
     CLI11_PARSE(app, argc, argv);
 
     spdlog::set_level(spdlog::level::debug);
 
-    const milliseconds_d server_update_interval{seconds_d{1.0 / server_update_rate_hz}};
-    const milliseconds_d client_update_interval{seconds_d{1.0 / client_update_rate_hz}};
+    milliseconds_d server_update_interval{seconds_d{1.0F / server_update_rate_hz}};
+    milliseconds_d client_update_interval{seconds_d{1.0F / client_update_rate_hz}};
 
     Client client;
     Client spectator;
@@ -78,6 +90,18 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& gui_io = ImGui::GetIO();
+    (void)gui_io;
+
+    // Setup GUI style
+    ImGui::StyleColorsDark();
+
+    // Set up Platform/Renderer backends
+    ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
+    ImGui_ImplSDLRenderer2_Init(renderer.get());
+
     constexpr int screen_center_x = screen_width / 2;
     constexpr int rect_height = 200;
     constexpr int rect_width = rect_height;
@@ -95,6 +119,10 @@ int main(int argc, char* argv[])
 
     uint32_t sequence_number{0};
 
+    bool prediction = false;
+    bool reconciliation = false;
+    bool interpolation = false;
+
     // Game loop
     while (true) {
         client.process_server_messages();
@@ -108,7 +136,9 @@ int main(int argc, char* argv[])
 
         // Poll event queue. When the queue is empty, this function returns 0.
         while (SDL_PollEvent(&event) != 0) {
-            if (event.type == SDL_QUIT) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+
+            if (event.type == SDL_QUIT || (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window.get()))) {
                 spdlog::info("[user] QUIT");
                 return 0;
             }
@@ -129,36 +159,106 @@ int main(int argc, char* argv[])
             server.send(msg, network_delay);
 
             // Client prediction
-            client.offset(update_position(client.offset(), -frame_duration_s.count())
-            );
+            if (prediction) {
+                client.offset(
+                  update_position(client.offset(), -frame_duration_s.count())
+                );
+            }
 
             // Reconciliation
-            client.save(msg);
+            if (reconciliation) {
+                client.save(msg);
+            }
         }
         else if (right_key_pressed) {
             Client_message const msg{
               .duration = frame_duration_s, .sequence_number = ++sequence_number};
             server.send(msg, network_delay);
 
-            // [client prediction] Immediately apply the input
-            client.offset(update_position(client.offset(), frame_duration_s.count())
-            );
+            // Client prediction
+            if (prediction) {
+                client.offset(
+                  update_position(client.offset(), frame_duration_s.count())
+                );
+            }
 
             // TODO: Revisit all names of things
             // TODO: Finish docs
-            // [reconciliation] Save the
-            client.save(msg);
+            if (reconciliation) {
+                // [reconciliation] Save the
+                client.save(msg);
+            }
         }
 
-        // NOTE: Normally all clients would interpolate, but since we only have
-        //  one entity in our world, then only the spectator needs to interpolate.
-        spectator.interpolate_entities(server_update_interval, interpolation_tick_delay);
+        if (interpolation) {
+            // NOTE: Normally all clients would interpolate, but since we only have
+            //  one entity in our world, then only the spectator needs to
+            //  interpolate.
+            spectator.interpolate_entities(
+              server_update_interval, interpolation_tick_delay
+            );
+        }
+
+        ImGui_ImplSDLRenderer2_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Configuration");
+
+        ImGui::Checkbox("Prediction", &prediction);
+        ImGui::Checkbox("Reconciliation", &reconciliation);
+        ImGui::Checkbox("Interpolation", &interpolation);
+
+        if (ImGui::SliderInt("Lag (ms)", &network_delay_ms, 0, 1000)) {
+            network_delay = std::chrono::milliseconds{network_delay_ms};
+            server.set_network_delay(network_delay);
+        }
+
+        if (ImGui::SliderFloat(
+              "Server (hz)", &server_update_rate_hz, 0.1F, 250.0F
+            )) {
+            server_update_interval = seconds_d{1.0F / server_update_rate_hz};
+        }
+
+        if (ImGui::SliderFloat(
+              "Client (hz)", &client_update_rate_hz, 1.0F, 250.0F
+            )) {
+            client_update_interval = seconds_d{1.0F / client_update_rate_hz};
+        }
+
+        if (ImGui::Button("Reset")) {
+            // TODO: There should be a function that does this so we can reuse
+            //  at init time
+            prediction = false;
+            reconciliation = false;
+            interpolation = false;
+
+            network_delay_ms = 250;
+            network_delay = std::chrono::milliseconds{network_delay_ms};
+            server.set_network_delay(network_delay);
+
+            server_update_rate_hz = 1.67F;
+            server_update_interval = seconds_d{1.0F / server_update_rate_hz};
+
+            client_update_rate_hz = 20.0F;
+            client_update_interval = seconds_d{1.0F / client_update_rate_hz};
+        }
+        ImGui::Text(
+          "%.3f ms/frame (%.1f FPS)",
+          1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
+          static_cast<double>(ImGui::GetIO().Framerate)
+        );
+        ImGui::End();
+        ImGui::Render();
 
         RETURN_IF_SDL_ERROR(
           SDL_SetRenderDrawColor, renderer.get(), 255, 255, 255, 255
         );
 
         RETURN_IF_SDL_ERROR(SDL_RenderClear, renderer.get());
+
+        // TODO: Not sure why this is after those renderer calls
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 
         // Offset the rectangle's position
         rectangle.x = static_cast<int>(std::round(initial_x + client.offset()));
@@ -180,4 +280,9 @@ int main(int argc, char* argv[])
 
         std::this_thread::sleep_for(client_update_interval);
     }
+
+    // Cleanup (TODO: RAII, unreachable)
+    ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 }
