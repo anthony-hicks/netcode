@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Config.hpp"
 #include "SDL.hpp"
 #include "Server.hpp"
 #include "Utils.hpp"
@@ -12,28 +13,15 @@
 #include <thread>
 
 using namespace std::chrono_literals;
-using seconds_d = std::chrono::duration<double>;
 
 int main(int argc, char* argv[])
 {
     CLI::App app;
 
-    int network_delay_ms{250};
-    std::chrono::milliseconds network_delay{network_delay_ms};
+    Config config{};
 
-    float server_update_rate_hz{1.67f};
-    float client_update_rate_hz{20};
     std::size_t interpolation_tick_delay{1};
 
-    app.add_option(
-      "--delay",
-      network_delay,
-      "Network delay in ms between any client and the server"
-    );
-    app.add_option("--tick-rate", server_update_rate_hz, "Server tick rate in hz");
-    app.add_option(
-      "--client-rate", client_update_rate_hz, "Client update rate in hz"
-    );
     app.add_option(
       "--interp-delay",
       interpolation_tick_delay,
@@ -44,24 +32,20 @@ int main(int argc, char* argv[])
 
     spdlog::set_level(spdlog::level::debug);
 
-    milliseconds_d server_update_interval{seconds_d{1.0F / server_update_rate_hz}};
-    milliseconds_d client_update_interval{seconds_d{1.0F / client_update_rate_hz}};
-
     Client client;
     Client spectator;
 
-    Server server(network_delay);
+    Server server(config.latency());
     client.id(server.connect(&client));
     spectator.id(server.connect(&spectator));
 
-    const std::jthread server_thread(
-      [&server, &server_update_interval](const std::stop_token& stop_token) {
-          while (!stop_token.stop_requested()) {
-              server.update();
-              std::this_thread::sleep_for(server_update_interval);
-          }
-      }
-    );
+    const std::jthread server_thread([&server,
+                                      &config](const std::stop_token& stop_token) {
+        while (!stop_token.stop_requested()) {
+            server.update();
+            std::this_thread::sleep_for(config.server_update_interval());
+        }
+    });
 
     SDL::initialize(SDL_INIT_EVENTS);
 
@@ -119,10 +103,6 @@ int main(int argc, char* argv[])
 
     uint32_t sequence_number{0};
 
-    bool prediction = false;
-    bool reconciliation = false;
-    bool interpolation = false;
-
     // Game loop
     while (true) {
         client.process_server_messages();
@@ -156,27 +136,27 @@ int main(int argc, char* argv[])
         if (left_key_pressed) {
             Client_message const msg{
               .duration = -frame_duration_s, .sequence_number = ++sequence_number};
-            server.send(msg, network_delay);
+            server.send(msg, config.latency());
 
             // Client prediction
-            if (prediction) {
+            if (config.prediction()) {
                 client.offset(
                   update_position(client.offset(), -frame_duration_s.count())
                 );
             }
 
             // Reconciliation
-            if (reconciliation) {
+            if (config.reconciliation()) {
                 client.save(msg);
             }
         }
         else if (right_key_pressed) {
             Client_message const msg{
               .duration = frame_duration_s, .sequence_number = ++sequence_number};
-            server.send(msg, network_delay);
+            server.send(msg, config.latency());
 
             // Client prediction
-            if (prediction) {
+            if (config.prediction()) {
                 client.offset(
                   update_position(client.offset(), frame_duration_s.count())
                 );
@@ -184,18 +164,18 @@ int main(int argc, char* argv[])
 
             // TODO: Revisit all names of things
             // TODO: Finish docs
-            if (reconciliation) {
+            if (config.reconciliation()) {
                 // [reconciliation] Save the
                 client.save(msg);
             }
         }
 
-        if (interpolation) {
+        if (config.interpolation()) {
             // NOTE: Normally all clients would interpolate, but since we only have
             //  one entity in our world, then only the spectator needs to
             //  interpolate.
             spectator.interpolate_entities(
-              server_update_interval, interpolation_tick_delay
+              config.server_update_interval(), interpolation_tick_delay
             );
         }
 
@@ -205,49 +185,42 @@ int main(int argc, char* argv[])
 
         ImGui::Begin("Configuration");
 
-        ImGui::Checkbox("Prediction", &prediction);
-        ImGui::Checkbox("Reconciliation", &reconciliation);
-        ImGui::Checkbox("Interpolation", &interpolation);
+        ImGui::Checkbox("Prediction", &config.prediction());
+        ImGui::Checkbox("Reconciliation", &config.reconciliation());
+        ImGui::Checkbox("Interpolation", &config.interpolation());
 
-        if (ImGui::SliderInt("Lag (ms)", &network_delay_ms, 0, 1000)) {
-            network_delay = std::chrono::milliseconds{network_delay_ms};
-            server.set_network_delay(network_delay);
+        static int latency_ms = static_cast<int>(config.latency().count());
+        if (ImGui::SliderInt("Lag (ms)", &latency_ms, 0, 1000)) {
+            config.latency(std::chrono::milliseconds{latency_ms});
+            server.set_network_delay(config.latency());
         }
 
-        if (ImGui::SliderFloat(
-              "Server (hz)", &server_update_rate_hz, 0.1F, 250.0F
-            )) {
-            server_update_interval = seconds_d{1.0F / server_update_rate_hz};
+        static float server_hz = config.server_update_rate();
+        if (ImGui::SliderFloat("Server (hz)", &server_hz, 0.1F, 250.0F)) {
+            config.server_update_rate(server_hz);
         }
 
-        if (ImGui::SliderFloat(
-              "Client (hz)", &client_update_rate_hz, 1.0F, 250.0F
-            )) {
-            client_update_interval = seconds_d{1.0F / client_update_rate_hz};
+        static float client_hz = config.client_update_rate();
+        if (ImGui::SliderFloat("Client (hz)", &client_hz, 1.0F, 250.0F)) {
+            config.client_update_rate(client_hz);
         }
 
         if (ImGui::Button("Reset")) {
-            // TODO: There should be a function that does this so we can reuse
-            //  at init time
-            prediction = false;
-            reconciliation = false;
-            interpolation = false;
+            config = Config();
 
-            network_delay_ms = 250;
-            network_delay = std::chrono::milliseconds{network_delay_ms};
-            server.set_network_delay(network_delay);
+            latency_ms = static_cast<int>(config.latency().count());
+            server.set_network_delay(config.latency());
 
-            server_update_rate_hz = 1.67F;
-            server_update_interval = seconds_d{1.0F / server_update_rate_hz};
-
-            client_update_rate_hz = 20.0F;
-            client_update_interval = seconds_d{1.0F / client_update_rate_hz};
+            client_hz = config.client_update_rate();
+            server_hz = config.server_update_rate();
         }
+
         ImGui::Text(
           "%.3f ms/frame (%.1f FPS)",
           1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
           static_cast<double>(ImGui::GetIO().Framerate)
         );
+
         ImGui::End();
         ImGui::Render();
 
@@ -278,7 +251,7 @@ int main(int argc, char* argv[])
         // TODO: This could be renderer.present();
         SDL_RenderPresent(renderer.get());
 
-        std::this_thread::sleep_for(client_update_interval);
+        std::this_thread::sleep_for(config.client_update_interval());
     }
 
     // Cleanup (TODO: RAII, unreachable)

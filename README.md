@@ -17,7 +17,6 @@ between a client and server (dumb client)
 - [x] Networking for player 2 client, which only receives the position of player 1
 - [x] Graphics for player 2 view
 - [x] Toggleable GUI for each technique and latency/tick rate
-- [ ] Add latency compensation
 - [x] Add graphics to enhance demonstration
 - [x] Add variable timestep and velocity-based position calculation to all programs
 - [ ] Add gifs to repo front page

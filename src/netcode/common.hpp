@@ -22,5 +22,7 @@
 #define DEFAULT_CTOR(T) DECLARE_CTOR(T, default)
 #define DISABLE_CTOR(T) DECLARE_CTOR(T, delete)
 
+using seconds_d = std::chrono::duration<double>;
+
 // NOTE: MUST BE DOUBLE, NOT FLOAT
 using milliseconds_d = std::chrono::duration<double, std::milli>;
