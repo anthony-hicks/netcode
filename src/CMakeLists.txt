@@ -13,6 +13,7 @@ add_executable(${target_name}
         SDL.cpp
         Server.cpp
         Client.cpp
+        Entity.hpp
 )
 
 target_link_libraries(${target_name}

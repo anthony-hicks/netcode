@@ -36,8 +36,8 @@ int main(int argc, char* argv[])
     Client spectator;
 
     Server server(config.latency());
-    client.id(server.connect(&client));
-    spectator.id(server.connect(&spectator));
+    client.entity_id(server.connect(&client));
+    spectator.entity_id(server.connect(&spectator));
 
     const std::jthread server_thread([&server,
                                       &config](const std::stop_token& stop_token) {
@@ -135,7 +135,9 @@ int main(int argc, char* argv[])
 
         if (left_key_pressed) {
             Client_message const msg{
-              .duration = -frame_duration_s, .sequence_number = ++sequence_number};
+              .entity_id = client.entity_id(),
+              .duration = -frame_duration_s,
+              .sequence_number = ++sequence_number};
             server.send(msg, config.latency());
 
             // Client prediction
@@ -152,7 +154,9 @@ int main(int argc, char* argv[])
         }
         else if (right_key_pressed) {
             Client_message const msg{
-              .duration = frame_duration_s, .sequence_number = ++sequence_number};
+              .entity_id = client.entity_id(),
+              .duration = frame_duration_s,
+              .sequence_number = ++sequence_number};
             server.send(msg, config.latency());
 
             // Client prediction
@@ -175,8 +179,7 @@ int main(int argc, char* argv[])
             //  one entity in our world, then only the spectator needs to
             //  interpolate.
             spectator.interpolate_entities(
-              config.server_update_interval(), interpolation_tick_delay
-            );
+              config.server_update_interval(), interpolation_tick_delay);
         }
 
         ImGui_ImplSDLRenderer2_NewFrame();

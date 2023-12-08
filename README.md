@@ -20,8 +20,8 @@ between a client and server (dumb client)
 - [x] Add graphics to enhance demonstration
 - [x] Add variable timestep and velocity-based position calculation to all programs
 - [ ] Add gifs to repo front page
-- [ ] Handle any number of entities
-- [ ] Add references
+- [x] Handle any number of entities
+- [x] Add references
 
 ## Requirements
 - cross-platform (eventually, linux preferred right now)

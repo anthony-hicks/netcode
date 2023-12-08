@@ -21,11 +21,12 @@ class Server {
     std::vector<Message> _queue;
     std::chrono::milliseconds _network_delay;
 
-    State_message _state{.position = 0, .last_processed_sequence_number = 0};
+    std::vector<Entity_state> _states;
+    std::vector<uint32_t> _last_processed_inputs;
 
 public:
     explicit Server(std::chrono::milliseconds network_delay);
-    std::size_t connect(Client* client);
+    size_t connect(Client* client);
     void send(Client_message const& msg, std::chrono::milliseconds delay);
     void update();
     void set_network_delay(std::chrono::milliseconds network_delay) { _network_delay = network_delay; }

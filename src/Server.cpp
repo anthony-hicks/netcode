@@ -12,8 +12,15 @@ Server::Server(std::chrono::milliseconds network_delay)
 
 std::size_t Server::connect(Client* client)
 {
+    const size_t entity_id{_clients.size()};
+
     _clients.push_back(client);
-    return _clients.size();
+
+    const Entity_state state{.position = 0.0, .id = entity_id};
+    _states.push_back(state);
+    _last_processed_inputs.push_back(0);
+
+    return entity_id;
 }
 
 void Server::send(const Client_message& cmd, std::chrono::milliseconds delay)
@@ -39,10 +46,11 @@ void Server::update()
             if (msg.recv_timestamp <= std::chrono::system_clock::now()) {
                 spdlog::info("[server] recv: (seq={}, duration={:.3f})", msg.message.sequence_number, msg.message.duration.count());
 
-                _state.last_processed_sequence_number = msg.message.sequence_number;
-                _state.position = update_position(_state.position, msg.message.duration.count());
+                auto id = msg.message.entity_id;
+                _states[id].position = update_position(_states[id].position, msg.message.duration.count());
+                _last_processed_inputs[id] = msg.message.sequence_number;
 
-                spdlog::info("[server] update: position = {:.3f}", _state.position);
+                spdlog::info("[server] update: position = {:.3f}", _states[id].position);
             }
         }
 
@@ -53,6 +61,14 @@ void Server::update()
 
     // Send clients game state
     for (auto& client : _clients) {
-        client->send(_state, _network_delay);
+
+        Server_update update_msg;
+        update_msg.states = _states;
+
+        // Only send the last input processed for this client, it doesn't care
+        // about the other clients
+        update_msg.last_processed_input = _last_processed_inputs[client->entity_id()];
+
+        client->send(update_msg, _network_delay);
     }
 }
