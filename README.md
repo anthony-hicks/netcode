@@ -36,6 +36,9 @@ between a client and server (dumb client)
     - https://github.com/bitwizeshift/result
     - std::expected
 
+## References
+Heavily influenced by https://www.gabrielgambetta.com/client-server-game-architecture.html
+
 ## Setup
 ### Tools
 - SDL2
